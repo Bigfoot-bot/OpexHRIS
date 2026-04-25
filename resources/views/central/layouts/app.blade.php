@@ -105,12 +105,12 @@
                         <div class="text-white/80 text-xs truncate">{{ auth('super_admin')->user()->name }}</div>
                         <div class="text-white/40 text-xs">Super Admin</div>
                     </div>
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </aside>
+                <form method="POST" action="{{ route('admin.logout') }}">
+                    @csrf
+                    <button type="submit" class="text-white/40 hover:text-white/80 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    </button>
+                </form>
         <div class="flex-1 flex flex-col overflow-hidden">
             <header class="bg-white border-b border-gray-100 px-8 h-14 flex items-center justify-between flex-shrink-0">
                 <div>
@@ -129,6 +129,7 @@
     @livewireScripts
 </body>
 </html>
+
 
 
 
