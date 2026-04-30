@@ -22,14 +22,18 @@ return Application::configure(basePath: dirname(__DIR__))
             }
             return 'http://hris-platform.test/login';
         });
-        $middleware->append(\App\Http\Middleware\SetLocale::class);
-        $middleware->append(\App\Http\Middleware\LoadBrandingSettings::class);
+        $middleware->web(append: [
+            \App\Http\Middleware\SetLocale::class,
+            \App\Http\Middleware\LoadBrandingSettings::class,
+        ]);
         $middleware->alias([
             'tenant.permission'    => \App\Http\Middleware\CheckTenantPermission::class,
             'tenant.subscription'  => \App\Http\Middleware\CheckSubscription::class,
             'tenant.ip'            => \App\Http\Middleware\CheckIpWhitelist::class,
             'tenant.mfa'           => \App\Http\Middleware\CheckMfa::class,
+            'maintenance'          => \App\Http\Middleware\MaintenanceMode::class,
         ]);
+
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

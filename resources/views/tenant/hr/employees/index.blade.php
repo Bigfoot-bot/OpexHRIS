@@ -23,6 +23,38 @@
         </form>
     </div>
 
+    {{-- Subscription Usage --}}
+    @if(isset($limit) && $limit['max'] < PHP_INT_MAX)
+    @php $pct = $limit['max'] > 0 ? min(100, ($limit['current'] / $limit['max']) * 100) : 0; @endphp
+    <div class="mb-4 bg-white rounded-xl border border-green-100 px-5 py-4">
+        <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-medium text-gray-600">Employee Usage</span>
+                <span class="text-xs text-gray-400">({{ $limit['plan_name'] }} Plan)</span>
+            </div>
+            <span class="text-xs font-semibold {{ $limit['at_limit'] ? 'text-red-600' : 'text-emerald-700' }}">
+                {{ $limit['current'] }} / {{ $limit['max'] }}
+            </span>
+        </div>
+        <div class="w-full bg-gray-100 rounded-full h-2">
+            <div class="h-2 rounded-full {{ $pct >= 100 ? 'bg-red-500' : ($pct >= 80 ? 'bg-amber-400' : 'bg-emerald-500') }}"
+                 style="width: {{ $pct }}%"></div>
+        </div>
+        @if($limit['at_limit'])
+            <p class="text-xs text-red-600 mt-2">Employee limit reached. Contact support or upgrade your plan to add more employees.</p>
+        @elseif($limit['remaining'] <= 5)
+            <p class="text-xs text-amber-600 mt-2">Only {{ $limit['remaining'] }} employee slot{{ $limit['remaining'] === 1 ? '' : 's' }} remaining on your current plan.</p>
+        @endif
+    </div>
+    @endif
+
+    {{-- Error Message --}}
+    @if(session('error'))
+        <div class="bg-red-50 border border-red-100 text-red-700 text-sm rounded-lg px-4 py-3 mb-4">
+            {{ session('error') }}
+        </div>
+    @endif
+
     {{-- Success Message --}}
     @if(session('success'))
         <div class="bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm rounded-lg px-4 py-3 mb-6">

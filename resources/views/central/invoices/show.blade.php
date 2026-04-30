@@ -60,7 +60,7 @@
                 <p class="text-sm font-medium text-emerald-900">{{ $invoice->tenant->name }}</p>
                 <p class="text-xs text-gray-400">{{ $invoice->tenant->email }}</p>
                 <p class="text-xs text-gray-400">{{ $invoice->tenant->phone }}</p>
-                <p class="text-xs text-gray-400">{{ $invoice->tenant->slug }}.hris-platform.test</p>
+                <p class="text-xs text-gray-400">{{ $invoice->tenant->domains->first()?->domain ?? $invoice->tenant->slug . '.' . parse_url(config('app.url'), PHP_URL_HOST) }}</p>
             </div>
 
             {{-- Line Items --}}

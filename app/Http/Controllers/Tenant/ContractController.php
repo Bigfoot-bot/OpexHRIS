@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Contract;
 use App\Models\Tenant\Employee;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ContractController extends Controller
 {
@@ -80,7 +81,7 @@ class ContractController extends Controller
         if ($request->hasFile('contract_file')) {
             $file     = $request->file('contract_file');
             $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('contracts/' . tenant('id')), $filename);
+            Storage::disk('local')->putFileAs('contracts/' . tenant('id'), $file, $filename);
             $data['file_path'] = 'contracts/' . tenant('id') . '/' . $filename;
             $data['file_name'] = $file->getClientOriginalName();
         }
@@ -119,7 +120,11 @@ class ContractController extends Controller
         if ($request->hasFile('contract_file')) {
             $file     = $request->file('contract_file');
             $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('contracts/' . tenant('id')), $filename);
+            // Remove old file if exists
+            if ($contract->file_path && Storage::disk('local')->exists($contract->file_path)) {
+                Storage::disk('local')->delete($contract->file_path);
+            }
+            Storage::disk('local')->putFileAs('contracts/' . tenant('id'), $file, $filename);
             $data['file_path'] = 'contracts/' . tenant('id') . '/' . $filename;
             $data['file_name'] = $file->getClientOriginalName();
         }
@@ -128,9 +133,36 @@ class ContractController extends Controller
         return redirect()->route('tenant.contracts.show', $contract)->with('success', 'Contract updated successfully!');
     }
 
+    public function download(Contract $contract)
+    {
+        if ($contract->tenant_id !== tenant('id')) abort(403);
+        if (!$contract->file_path) abort(404);
+
+        // Try storage disk first, then public fallback for old files
+        if (Storage::disk('local')->exists($contract->file_path)) {
+            return Storage::disk('local')->download($contract->file_path, $contract->file_name ?? basename($contract->file_path));
+        }
+
+        $publicPath = public_path($contract->file_path);
+        if (file_exists($publicPath)) {
+            return response()->download($publicPath, $contract->file_name ?? basename($contract->file_path));
+        }
+
+        abort(404);
+    }
+
     public function destroy(Contract $contract)
     {
         if ($contract->tenant_id !== tenant('id')) abort(403);
+
+        if ($contract->file_path) {
+            if (Storage::disk('local')->exists($contract->file_path)) {
+                Storage::disk('local')->delete($contract->file_path);
+            } elseif (file_exists(public_path($contract->file_path))) {
+                unlink(public_path($contract->file_path));
+            }
+        }
+
         $contract->delete();
         return redirect()->route('tenant.contracts.index')->with('success', 'Contract deleted successfully!');
     }

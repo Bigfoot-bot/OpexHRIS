@@ -72,18 +72,56 @@
         @else
             <div class="space-y-4">
                 @foreach($announcements as $announcement)
+                @php
+                    // For employee-targeted, fetch sibling count
+                    $empCount = null;
+                    $empNames = null;
+                    if ($announcement->employee_id !== null) {
+                        $siblings = \App\Models\Announcement::where('tenant_id', $announcement->tenant_id)
+                            ->where('title', $announcement->title)
+                            ->where('body', $announcement->body)
+                            ->whereNotNull('employee_id')
+                            ->whereRaw("DATE_FORMAT(created_at, '%Y-%m-%d %H:%i') = DATE_FORMAT(?, '%Y-%m-%d %H:%i')", [$announcement->created_at])
+                            ->with('employee')
+                            ->get();
+                        $empCount = $siblings->count();
+                        $empNames = $siblings->pluck('employee')->filter()->map(fn($e) => $e->first_name . ' ' . $e->last_name);
+                    }
+                @endphp
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                         <div class="flex items-start justify-between gap-4">
                             <div class="flex-1">
                                 <div class="flex items-center gap-2 mb-1">
-                                    <span class="text-xs bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 rounded-full">Facility</span>
+                                    @if($announcement->employee_id !== null)
+                                        <span class="text-xs bg-purple-50 text-purple-700 border border-purple-100 px-2 py-0.5 rounded-full">
+                                            {{ $empCount }} {{ $empCount === 1 ? 'employee' : 'employees' }}
+                                        </span>
+                                    @elseif($announcement->branch_id)
+                                        <span class="text-xs bg-amber-50 text-amber-700 border border-amber-100 px-2 py-0.5 rounded-full">Branch</span>
+                                    @else
+                                        <span class="text-xs bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 rounded-full">All Employees</span>
+                                    @endif
+                                    @if($announcement->send_email)
+                                        <span class="text-xs bg-gray-50 text-gray-500 border border-gray-100 px-2 py-0.5 rounded-full">Email sent</span>
+                                    @endif
                                     <span class="text-xs text-gray-400">{{ $announcement->created_at->format('M d, Y h:i A') }}</span>
                                 </div>
+
                                 <h3 class="text-sm font-semibold text-gray-800 mb-2">{{ $announcement->title }}</h3>
-                                <p class="text-sm text-gray-500 mb-3">{{ $announcement->body }}</p>
+                                <p class="text-sm text-gray-500 mb-2">{{ $announcement->body }}</p>
+
+                                {{-- Recipient names for targeted --}}
+                                @if($announcement->employee_id !== null && $empNames?->isNotEmpty())
+                                    <div class="flex flex-wrap gap-1.5 mt-2">
+                                        @foreach($empNames as $name)
+                                            <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{{ $name }}</span>
+                                        @endforeach
+                                    </div>
+                                @endif
+
                                 @if($announcement->meeting_link)
                                     <a href="{{ $announcement->meeting_link }}" target="_blank"
-                                       class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 py-2 rounded-lg transition-colors">
+                                       class="inline-flex items-center gap-2 mt-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 py-2 rounded-lg transition-colors">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.31a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/>
                                         </svg>

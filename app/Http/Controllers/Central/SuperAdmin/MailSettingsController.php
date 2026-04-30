@@ -18,19 +18,32 @@ class MailSettingsController extends Controller
     public function update(Request $request)
     {
         $request->validate([
-            'mail_username'     => ['required', 'email'],
-            'mail_password'     => ['required'],
-            'mail_from_address' => ['required', 'email'],
-            'mail_from_name'    => ['required', 'string', 'max:255'],
+            'mail_username' => ['required', 'email'],
+            'mail_password' => ['required'],
+            'mail_from_name' => ['required', 'string', 'max:255'],
         ]);
+
+        $fromAddress = $request->filled('mail_from_address') ? $request->mail_from_address : $request->mail_username;
 
         $settings = MailSetting::getSettings();
         $settings->update([
             'mail_username'     => $request->mail_username,
             'mail_password'     => $request->mail_password,
-            'mail_from_address' => $request->mail_from_address,
+            'mail_from_address' => $fromAddress,
             'mail_from_name'    => $request->mail_from_name,
             'is_configured'     => true,
+        ]);
+
+        // Apply immediately so test email works in same session
+        config([
+            'mail.default'                 => 'smtp',
+            'mail.mailers.smtp.host'       => $settings->mail_host,
+            'mail.mailers.smtp.port'       => $settings->mail_port,
+            'mail.mailers.smtp.username'   => $settings->mail_username,
+            'mail.mailers.smtp.password'   => $settings->mail_password,
+            'mail.mailers.smtp.encryption' => $settings->mail_encryption,
+            'mail.from.address'            => $fromAddress,
+            'mail.from.name'               => $settings->mail_from_name,
         ]);
 
         return back()->with('success', 'Mail settings saved successfully.');
@@ -61,7 +74,7 @@ class MailSettingsController extends Controller
 
             Mail::raw('This is a test email from OpEx HRIS. Your mail settings are working correctly!', function ($message) use ($request, $settings) {
                 $message->to($request->test_email)
-                        ->subject('OpEx HRIS — Test Email');
+                        ->subject('OpEx HRIS ï¿½ Test Email');
             });
 
             return back()->with('success', 'Test email sent successfully to ' . $request->test_email);

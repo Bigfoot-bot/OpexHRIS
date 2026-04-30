@@ -14,20 +14,22 @@ use App\Http\Controllers\Central\SuperAdmin\MailSettingsController;
 // Redirect root to login
 Route::get('/', fn() => redirect()->route('admin.login'));
 
-// Guest routes
-Route::middleware('guest:super_admin')->group(function () {
+// Guest routes — rate-limited to prevent brute force
+Route::middleware(['guest:super_admin', 'throttle:login'])->group(function () {
     Route::get('/login', [LoginController::class, 'show'])->name('admin.login');
     Route::post('/login', [LoginController::class, 'login'])->name('admin.login.post');
 
-    // Super Admin Password Reset
-    Route::get('/admin/forgot-password', [PasswordResetController::class, 'showForgotForm'])->name('admin.password.request');
-    Route::post('/admin/forgot-password', [PasswordResetController::class, 'sendResetLink'])->name('admin.password.email');
-    Route::get('/admin/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('admin.password.reset');
-    Route::post('/admin/reset-password', [PasswordResetController::class, 'reset'])->name('admin.password.update');
+    // Super Admin Password Reset — stricter limit
+    Route::middleware('throttle:password-reset')->group(function () {
+        Route::get('/admin/forgot-password', [PasswordResetController::class, 'showForgotForm'])->name('admin.password.request');
+        Route::post('/admin/forgot-password', [PasswordResetController::class, 'sendResetLink'])->name('admin.password.email');
+        Route::get('/admin/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('admin.password.reset');
+        Route::post('/admin/reset-password', [PasswordResetController::class, 'reset'])->name('admin.password.update');
+    });
 });
 
-// Super Admin authenticated routes
-Route::middleware('auth:super_admin')->prefix('admin')->name('admin.')->group(function () {
+// Super Admin authenticated routes — general throttle
+Route::middleware(['auth:super_admin', 'throttle:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     // MFA Settings
@@ -38,6 +40,7 @@ Route::middleware('auth:super_admin')->prefix('admin')->name('admin.')->group(fu
     Route::get('integrations', [App\Http\Controllers\Central\IntegrationsController::class, 'index'])->name('integrations.index');
     Route::post('integrations', [App\Http\Controllers\Central\IntegrationsController::class, 'update'])->name('integrations.update');
     Route::post('integrations/test-sms', [App\Http\Controllers\Central\IntegrationsController::class, 'testSms'])->name('integrations.test-sms');
+    Route::post('integrations/bulk-sms', [App\Http\Controllers\Central\IntegrationsController::class, 'bulkSms'])->name('integrations.bulk-sms');
     // Facilities
     Route::resource('tenants', TenantController::class);
     Route::post('tenants/{tenant}/toggle-status', [TenantController::class, 'toggleStatus'])->name('tenants.toggle-status');
@@ -92,6 +95,11 @@ Route::middleware('auth:super_admin')->prefix('admin')->name('admin.')->group(fu
     // Branding Settings
     Route::get('branding-settings', [App\Http\Controllers\Central\SuperAdmin\BrandingSettingsController::class, 'index'])->name('branding-settings.index');
     Route::post('branding-settings', [App\Http\Controllers\Central\SuperAdmin\BrandingSettingsController::class, 'update'])->name('branding-settings.update');
+
+    // General Settings
+    Route::get('general-settings', [App\Http\Controllers\Central\SuperAdmin\GeneralSettingsController::class, 'index'])->name('general-settings.index');
+    Route::post('general-settings', [App\Http\Controllers\Central\SuperAdmin\GeneralSettingsController::class, 'update'])->name('general-settings.update');
+    Route::post('general-settings/change-password', [App\Http\Controllers\Central\SuperAdmin\GeneralSettingsController::class, 'changePassword'])->name('general-settings.change-password');
 
     // Subscription Plans
     Route::get('subscription-plans', [App\Http\Controllers\Central\SuperAdmin\SubscriptionPlanController::class, 'index'])->name('subscription-plans.index');

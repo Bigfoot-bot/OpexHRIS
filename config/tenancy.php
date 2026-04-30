@@ -11,10 +11,11 @@ return [
 
     'id_generator' => Stancl\Tenancy\UUIDGenerator::class,
 
-    'central_domains' => [
+    'central_domains' => array_filter([
         '127.0.0.1',
         'hris-platform.test',
-    ],
+        parse_url(env('APP_URL', ''), PHP_URL_HOST) ?: null,
+    ]),
 
     'bootstrappers' => [
         Stancl\Tenancy\Bootstrappers\CacheTenancyBootstrapper::class,

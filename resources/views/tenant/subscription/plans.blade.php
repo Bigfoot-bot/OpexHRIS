@@ -13,18 +13,20 @@
     @if($isHighestPlan && !$canRenewSame)
     <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-5 text-center">
         <p class="text-emerald-700 font-semibold">You are on the highest available plan!</p>
-        <p class="text-emerald-600 text-sm mt-1">Your current <strong>{{ $currentPlanName }}</strong> plan cannot be upgraded. Wait for it to expire to resubscribe.</p>
+        <p class="text-emerald-600 text-sm mt-1">Your <strong>{{ $currentPlanName }}</strong> plan ({{ $currentMaxEmployees }} employees) is the highest capacity available. Contact support to discuss custom plans.</p>
         <a href="{{ route('tenant.subscription.index') }}" class="mt-3 inline-block text-sm text-emerald-700 underline">View my subscription</a>
     </div>
     @elseif($canRenewSame)
     <div class="bg-amber-50 border border-amber-100 rounded-2xl p-5">
         <p class="text-amber-700 font-semibold">Your subscription expires in {{ $daysLeft }} days!</p>
-        <p class="text-amber-600 text-sm mt-1">You can now renew your current <strong>{{ $currentPlanName }}</strong> plan or upgrade to a higher plan.</p>
+        <p class="text-amber-600 text-sm mt-1">You can renew your current <strong>{{ $currentPlanName }}</strong> plan ({{ $currentMaxEmployees }} employees) or upgrade to a higher plan. Choose a billing cycle below.</p>
     </div>
     @elseif($currentPlanName)
-    <div class="bg-blue-50 border border-blue-100 rounded-2xl p-5">
-        <p class="text-blue-700 font-semibold">Upgrading from {{ $currentPlanName }}</p>
-        <p class="text-blue-600 text-sm mt-1">You can only upgrade to a higher plan. Same plan renewal is available 7 days before expiry.</p>
+    <div class="bg-blue-50 border border-blue-100 rounded-2xl p-5 flex items-start gap-4">
+        <div class="flex-1">
+            <p class="text-blue-700 font-semibold text-sm">Upgrading from {{ $currentPlanName }} &mdash; {{ $currentMaxEmployees }} employee limit</p>
+            <p class="text-blue-600 text-xs mt-1">Only plans with a higher employee capacity are shown. Pick a billing cycle to compare pricing, then select a plan.</p>
+        </div>
     </div>
     @endif
 
@@ -59,7 +61,14 @@
                     <span class="bg-emerald-700 text-white text-xs font-medium px-3 py-1 rounded-full">Most Popular</span>
                 </div>
             @endif
-            <h3 class="text-lg font-semibold text-gray-800 mb-1">{{ $plan->name }}</h3>
+            <div class="flex items-start justify-between mb-1">
+                <h3 class="text-lg font-semibold text-gray-800">{{ $plan->name }}</h3>
+                @if(isset($currentMaxEmployees) && $plan->max_employees > $currentMaxEmployees)
+                    <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap ml-2">
+                        +{{ $plan->max_employees - $currentMaxEmployees }} more employees
+                    </span>
+                @endif
+            </div>
             <p class="text-xs text-gray-400 mb-4">{{ $plan->description }}</p>
 
             @foreach(['monthly', 'quarterly', 'biannual', 'annual'] as $cycle)

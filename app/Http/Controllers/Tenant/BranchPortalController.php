@@ -190,27 +190,105 @@ class BranchPortalController extends Controller
     public function announcements(Branch $branch)
     {
         $this->checkAccess($branch);
-        $announcements = \App\Models\Announcement::where('tenant_id', tenant('id'))
-                            ->where(function($q) use ($branch) {
-                                $q->whereNull('branch_id')->orWhere('branch_id', $branch->id);
+        $tenantId = tenant('id');
+
+        // Show: facility-wide (no branch, no employee), this-branch-only, or employee-targeted (representative row per batch)
+        $announcements = \App\Models\Announcement::where('tenant_id', $tenantId)
+                            ->where('type', 'facility')
+                            ->where(function ($q) use ($branch, $tenantId) {
+                                $q->where(function ($q2) use ($branch) {
+                                    // Facility-wide or branch-specific, no employee targeting
+                                    $q2->whereNull('employee_id')
+                                       ->where(function ($q3) use ($branch) {
+                                           $q3->whereNull('branch_id')->orWhere('branch_id', $branch->id);
+                                       });
+                                })->orWhereIn('id', function ($sub) use ($tenantId) {
+                                    // Representative row per employee-targeted batch
+                                    $sub->selectRaw('MIN(id)')
+                                        ->from('announcements')
+                                        ->where('tenant_id', $tenantId)
+                                        ->where('type', 'facility')
+                                        ->whereNotNull('employee_id')
+                                        ->groupByRaw("title, body, DATE_FORMAT(created_at, '%Y-%m-%d %H:%i')");
+                                });
                             })
                             ->latest()->paginate(15);
-        return view('tenant.branch.announcements', compact('branch', 'announcements'));
+
+        $branchEmployees = Employee::where('branch_id', $branch->id)
+                            ->where('tenant_id', $tenantId)
+                            ->where('employment_status', 'active')
+                            ->orderBy('first_name')
+                            ->get();
+
+        // All active employees across the facility (for "all branches" option)
+        $allEmployees = Employee::where('tenant_id', $tenantId)
+                            ->where('employment_status', 'active')
+                            ->with('branch')
+                            ->orderBy('first_name')
+                            ->get();
+
+        return view('tenant.branch.announcements', compact('branch', 'announcements', 'branchEmployees', 'allEmployees'));
     }
 
     public function storeAnnouncement(Request $request, Branch $branch)
     {
         $this->checkAccess($branch);
-        $request->validate(['title' => ['required', 'string'], 'content' => ['required', 'string']]);
-        \App\Models\Announcement::create([
-            'tenant_id'  => tenant('id'),
-            'branch_id'  => $branch->id,
-            'title'      => $request->title,
-            'body'       => $request->content,
-            'type'       => 'facility',
-            'sender_type'=> 'branch',
+        $request->validate([
+            'title'        => ['required', 'string'],
+            'content'      => ['required', 'string'],
+            'audience'     => ['required', 'in:all_branches,branch_only,specific_employees'],
+            'employee_ids' => ['required_if:audience,specific_employees', 'array', 'min:1'],
         ]);
-        return back()->with('success', 'Announcement posted successfully!');
+
+        $tenantId = tenant('id');
+
+        if ($request->audience === 'all_branches') {
+            // Facility-wide, no branch restriction
+            \App\Models\Announcement::create([
+                'tenant_id'   => $tenantId,
+                'branch_id'   => null,
+                'employee_id' => null,
+                'title'       => $request->title,
+                'body'        => $request->input('content'),
+                'type'        => 'facility',
+                'sender_type' => 'branch',
+            ]);
+            return back()->with('success', 'Announcement sent to all employees across all branches.');
+        }
+
+        if ($request->audience === 'branch_only') {
+            // This branch only
+            \App\Models\Announcement::create([
+                'tenant_id'   => $tenantId,
+                'branch_id'   => $branch->id,
+                'employee_id' => null,
+                'title'       => $request->title,
+                'body'        => $request->input('content'),
+                'type'        => 'facility',
+                'sender_type' => 'branch',
+            ]);
+            return back()->with('success', 'Announcement posted for this branch.');
+        }
+
+        // Specific employees
+        $employees = Employee::whereIn('id', $request->employee_ids)
+                        ->where('tenant_id', $tenantId)
+                        ->get();
+
+        foreach ($employees as $employee) {
+            \App\Models\Announcement::create([
+                'tenant_id'   => $tenantId,
+                'branch_id'   => null,
+                'employee_id' => $employee->id,
+                'title'       => $request->title,
+                'body'        => $request->input('content'),
+                'type'        => 'facility',
+                'sender_type' => 'branch',
+            ]);
+        }
+
+        $count = $employees->count();
+        return back()->with('success', "Announcement sent to {$count} " . ($count === 1 ? 'employee' : 'employees') . '.');
     }
 
     public function destroyAnnouncement(Branch $branch, $announcement)

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Central\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Central\Tenant;
+use App\Models\FacilitySubscription;
+use App\Models\SubscriptionPlan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -12,21 +14,26 @@ class OnboardingWizardController extends Controller
     // Step 1 — Facility Profile
     public function step1()
     {
-        return view('central.onboarding.step1');
+        $plans     = SubscriptionPlan::where('is_active', true)->orderBy('monthly_price')->get();
+        $discounts = \App\Models\SubscriptionDiscount::all()->keyBy('cycle');
+        return view('central.onboarding.step1', compact('plans', 'discounts'));
     }
 
     public function step1Store(Request $request)
     {
+        $planIds = SubscriptionPlan::where('is_active', true)->pluck('id')->toArray();
+
         $validated = $request->validate([
-            'name'          => ['required', 'string', 'max:255'],
-            'email'         => ['required', 'email', 'unique:tenants,email'],
-            'phone'         => ['required', 'string', 'max:20'],
-            'facility_type' => ['required', 'string'],
-            'county'        => ['required', 'string'],
-            'address'       => ['nullable', 'string'],
-            'keph_level'    => ['nullable', 'string'],
-            'bed_capacity'  => ['nullable', 'integer'],
-            'subscription_plan' => ['required', 'in:basic,professional,enterprise'],
+            'name'              => ['required', 'string', 'max:255'],
+            'email'             => ['required', 'email', 'unique:tenants,email'],
+            'phone'             => ['required', 'string', 'max:20'],
+            'facility_type'     => ['required', 'string'],
+            'county'            => ['required', 'string'],
+            'address'           => ['nullable', 'string'],
+            'keph_level'        => ['nullable', 'string'],
+            'bed_capacity'      => ['nullable', 'integer'],
+            'subscription_plan' => ['required', 'integer', 'in:' . implode(',', $planIds)],
+            'billing_cycle'     => ['required', 'in:monthly,quarterly,biannual,annual'],
         ]);
 
         // Store in session
@@ -137,6 +144,8 @@ class OnboardingWizardController extends Controller
             $slug = $originalSlug . '-' . $count++;
         }
 
+        $selectedPlan = SubscriptionPlan::find($step1['subscription_plan']);
+
         $tenant = Tenant::create([
             'id'                => Str::uuid(),
             'name'              => $step1['name'],
@@ -148,13 +157,14 @@ class OnboardingWizardController extends Controller
             'address'           => $step1['address'] ?? null,
             'keph_level'        => $step1['keph_level'] ?? null,
             'bed_capacity'      => $step1['bed_capacity'] ?? null,
-            'subscription_plan' => $step1['subscription_plan'],
+            'subscription_plan' => $selectedPlan ? strtolower($selectedPlan->name) : 'basic',
             'is_active'         => true,
             'trial_ends_at'     => now()->addDays(14),
         ]);
 
+        $baseHost = parse_url(config('app.url'), PHP_URL_HOST);
         $tenant->domains()->create([
-            'domain' => $slug . '.hris-platform.test',
+            'domain' => $slug . '.' . $baseHost,
         ]);
 
         // Create HR Admin user
@@ -164,10 +174,30 @@ class OnboardingWizardController extends Controller
             'email'     => $step4['admin_email'],
             'password'  => bcrypt($step4['admin_password']),
             'status'    => 'active',
+            'is_admin'  => true,
+            'is_hr'     => true,
         ]);
 
         // Assign HR Admin role
         $user->assignRole('HR Admin');
+
+        // Create trial subscription using the selected billing cycle
+        if ($selectedPlan) {
+            $cycle  = $step1['billing_cycle'] ?? 'monthly';
+            $months = \App\Models\SubscriptionDiscount::getMonths($cycle);
+            FacilitySubscription::create([
+                'tenant_id'      => $tenant->id,
+                'plan_id'        => $selectedPlan->id,
+                'cycle'          => $cycle,
+                'amount_paid'    => 0.00,
+                'vat_amount'     => 0.00,
+                'discount_amount'=> 0.00,
+                'start_date'     => now()->toDateString(),
+                'end_date'       => now()->addMonths($months)->toDateString(),
+                'status'         => 'trial',
+                'auto_renew'     => false,
+            ]);
+        }
 
         // Create departments in tenant settings
         if (!empty($step2)) {

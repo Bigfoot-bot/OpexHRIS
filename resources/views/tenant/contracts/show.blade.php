@@ -6,7 +6,7 @@
     <div class="flex gap-2">
         <a href="{{ route('tenant.contracts.edit', $contract) }}" class="bg-white border border-gray-200 text-gray-600 text-sm font-medium px-4 py-2 rounded-lg">Edit</a>
         @if($contract->file_path)
-            <a href="{{ asset($contract->file_path) }}" target="_blank" class="bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium px-4 py-2 rounded-lg">Download</a>
+            <a href="{{ route('tenant.contracts.download', $contract) }}" class="bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium px-4 py-2 rounded-lg">Download</a>
         @endif
     </div>
 @else

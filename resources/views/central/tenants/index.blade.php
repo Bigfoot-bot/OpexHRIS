@@ -82,10 +82,11 @@
                             </span>
                         </td>
                         <td class="px-6 py-4">
-                            <a href="http://{{ $tenant->slug }}.hris-platform.test"
+                            @php $td = $tenant->domains->first()?->domain ?? $tenant->slug . '.' . parse_url(config('app.url'), PHP_URL_HOST); @endphp
+                            <a href="https://{{ $td }}/login"
                                target="_blank"
                                class="text-xs text-emerald-600 hover:text-emerald-800">
-                                {{ $tenant->slug }}.hris-platform.test ↗
+                                {{ $td }} ↗
                             </a>
                         </td>
                         <td class="px-6 py-4">

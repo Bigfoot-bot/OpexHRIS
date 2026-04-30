@@ -1,9 +1,8 @@
 @extends('central.layouts.app')
 
 @section('title', 'Announcements')
-
 @section('page-title', 'Announcements')
-@section('page-subtitle', 'Send announcements to all facilities')
+@section('page-subtitle', 'Manage announcements sent to facilities')
 
 @section('page-actions')
     <a href="{{ route('admin.announcements.create') }}"
@@ -37,33 +36,67 @@
     @else
         <div class="space-y-4">
             @foreach($announcements as $announcement)
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                    <div class="flex items-start justify-between gap-4">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-full">Global</span>
-                                <span class="text-xs text-gray-400">{{ $announcement->created_at->format('M d, Y h:i A') }}</span>
-                            </div>
-                            <h3 class="text-sm font-semibold text-gray-800 mb-2">{{ $announcement->title }}</h3>
-                            <p class="text-sm text-gray-500 line-clamp-2 mb-2">{{ $announcement->body }}</p>
-                            @if($announcement->meeting_link)
-                                <a href="{{ $announcement->meeting_link }}" target="_blank"
-                                   class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.31a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/>
-                                    </svg>
-                                    Join Meeting
-                                </a>
+            @php
+                // For targeted, fetch all sibling rows (same title+body+minute)
+                $recipients = null;
+                if ($announcement->type === 'targeted') {
+                    $recipients = \App\Models\Announcement::where('type', 'targeted')
+                        ->where('title', $announcement->title)
+                        ->where('body', $announcement->body)
+                        ->whereRaw("DATE_FORMAT(created_at, '%Y-%m-%d %H:%i') = DATE_FORMAT(?, '%Y-%m-%d %H:%i')", [$announcement->created_at])
+                        ->with('tenant')
+                        ->get()
+                        ->pluck('tenant')
+                        ->filter();
+                }
+            @endphp
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            @if($announcement->type === 'global')
+                                <span class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-full">All Facilities</span>
+                            @else
+                                <span class="text-xs bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 rounded-full">
+                                    Targeted &mdash; {{ $recipients?->count() ?? 1 }} {{ ($recipients?->count() ?? 1) === 1 ? 'facility' : 'facilities' }}
+                                </span>
                             @endif
+                            @if($announcement->send_email)
+                                <span class="text-xs bg-gray-50 text-gray-500 border border-gray-100 px-2 py-0.5 rounded-full">Email sent</span>
+                            @endif
+                            <span class="text-xs text-gray-400">{{ $announcement->created_at->format('M d, Y h:i A') }}</span>
                         </div>
-                        <form method="POST" action="{{ route('admin.announcements.destroy', $announcement) }}"
-                              onsubmit="return confirm('Delete this announcement?')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="text-red-400 hover:text-red-600 text-xs">Delete</button>
-                        </form>
+
+                        <h3 class="text-sm font-semibold text-gray-800 mb-2">{{ $announcement->title }}</h3>
+                        <p class="text-sm text-gray-500 line-clamp-2 mb-2">{{ $announcement->body }}</p>
+
+                        {{-- Recipient list for targeted --}}
+                        @if($announcement->type === 'targeted' && $recipients?->isNotEmpty())
+                            <div class="flex flex-wrap gap-1.5 mt-2">
+                                @foreach($recipients as $t)
+                                    <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{{ $t->name }}</span>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        @if($announcement->meeting_link)
+                            <a href="{{ $announcement->meeting_link }}" target="_blank"
+                               class="inline-flex items-center gap-2 mt-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.069A1 1 0 0121 8.845v6.31a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/>
+                                </svg>
+                                Join Meeting
+                            </a>
+                        @endif
                     </div>
+                    <form method="POST" action="{{ route('admin.announcements.destroy', $announcement) }}"
+                          onsubmit="return confirm('Delete this announcement?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="text-red-400 hover:text-red-600 text-xs">Delete</button>
+                    </form>
                 </div>
+            </div>
             @endforeach
         </div>
         <div class="mt-4">{{ $announcements->links() }}</div>
@@ -71,4 +104,3 @@
 
 </div>
 @endsection
-

@@ -164,7 +164,7 @@
                     <tr class="hover:bg-gray-50/50">
                         <td class="px-6 py-3">
                             <p class="text-sm font-medium text-emerald-900">{{ $tenant->name }}</p>
-                            <p class="text-xs text-gray-400">{{ $tenant->slug }}.hris-platform.test</p>
+                            <p class="text-xs text-gray-400">{{ $tenant->domains->first()?->domain ?? $tenant->slug . '.' . parse_url(config('app.url'), PHP_URL_HOST) }}</p>
                         </td>
                         <td class="px-6 py-3">
                             @php

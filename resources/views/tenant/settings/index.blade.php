@@ -154,7 +154,7 @@
                     </div>
                     <div>
                         <p class="text-xs text-gray-400">Subdomain</p>
-                        <p class="text-sm text-gray-600">{{ $tenant->slug }}.hris-platform.test</p>
+                        <p class="text-sm text-gray-600">{{ $tenant->domains->first()?->domain ?? $tenant->slug . '.' . parse_url(config('app.url'), PHP_URL_HOST) }}</p>
                     </div>
                     <div>
                         <p class="text-xs text-gray-400">Plan</p>

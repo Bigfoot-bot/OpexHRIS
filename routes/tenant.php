@@ -5,6 +5,7 @@ use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use App\Http\Controllers\Tenant\Auth\LoginController;
 use App\Http\Controllers\Tenant\Auth\InvitationController;
 use App\Http\Controllers\Tenant\Auth\PasswordResetController;
+use App\Http\Controllers\Tenant\Auth\SetPasswordController;
 use App\Http\Controllers\Tenant\DashboardController;
 use App\Http\Controllers\Tenant\NotificationController;
 use App\Http\Controllers\Tenant\SettingsController;
@@ -37,25 +38,29 @@ Route::middleware(['web'])
     ->group(function () use ($centralDomains) {
 
         if (!in_array(request()->getHost(), $centralDomains)) {
-            Route::middleware([InitializeTenancyByDomain::class])->group(function () {
+            Route::middleware([InitializeTenancyByDomain::class, 'maintenance'])->group(function () {
 
                 Route::get('/', fn() => redirect()->route('tenant.login'));
 
                 // Daraja Callback - Public
                 Route::post('/daraja/callback', [App\Http\Controllers\Tenant\DarajaController::class, 'callback'])->name('tenant.daraja.callback');
 
-                Route::middleware('guest')->group(function () {
+                Route::middleware(['guest', 'throttle:login'])->group(function () {
                     Route::get('/login', [LoginController::class, 'show'])->name('tenant.login');
                     Route::post('/login', [LoginController::class, 'login'])->name('tenant.login.post');
                     Route::get('/invitation/{token}', [InvitationController::class, 'accept'])->name('tenant.invitation.accept');
                     Route::post('/invitation/{token}', [InvitationController::class, 'store'])->name('tenant.invitation.store');
-                    Route::get('/forgot-password', [PasswordResetController::class, 'showForgotForm'])->name('tenant.password.request');
-                    Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])->name('tenant.password.email');
-                    Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('tenant.password.reset');
-                    Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('tenant.password.update');
+                    Route::get('/set-password', [SetPasswordController::class, 'show'])->name('tenant.set-password.show');
+                    Route::post('/set-password', [SetPasswordController::class, 'store'])->name('tenant.set-password.store');
+                    Route::middleware('throttle:password-reset')->group(function () {
+                        Route::get('/forgot-password', [PasswordResetController::class, 'showForgotForm'])->name('tenant.password.request');
+                        Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])->name('tenant.password.email');
+                        Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('tenant.password.reset');
+                        Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('tenant.password.update');
+                    });
                 });
 
-                Route::middleware('auth')->group(function () {
+                Route::middleware(['auth', 'throttle:tenant'])->group(function () {
                     Route::post('/logout', [LoginController::class, 'logout'])->name('tenant.logout');
                     Route::post('portal/switch', [PortalController::class, 'switch'])->name('tenant.portal.switch');
                     Route::post('portal/switch', [PortalController::class, 'switch'])->name('tenant.portal.switch');
@@ -78,9 +83,11 @@ Route::middleware(['web'])
                     Route::get('search', [SearchController::class, 'index'])->name('tenant.search');
                     Route::get('roles', [App\Http\Controllers\Tenant\RoleController::class, 'index'])->name('tenant.roles.index');
                     Route::post('roles', [App\Http\Controllers\Tenant\RoleController::class, 'store'])->name('tenant.roles.store');
-                    Route::put('roles/{role}', [App\Http\Controllers\Tenant\RoleController::class, 'update'])->name('tenant.roles.update');
-                    Route::post('roles/revoke', [App\Http\Controllers\Tenant\RoleController::class, 'revokeRole'])->name('tenant.roles.revoke');
                     Route::get('roles/users', [App\Http\Controllers\Tenant\RoleController::class, 'users'])->name('tenant.roles.users');
+                    Route::post('roles/assign', [App\Http\Controllers\Tenant\RoleController::class, 'assignRole'])->name('tenant.roles.assign');
+                    Route::post('roles/revoke', [App\Http\Controllers\Tenant\RoleController::class, 'revokeRole'])->name('tenant.roles.revoke');
+                    Route::put('roles/{role}', [App\Http\Controllers\Tenant\RoleController::class, 'update'])->name('tenant.roles.update');
+                    Route::delete('roles/{role}', [App\Http\Controllers\Tenant\RoleController::class, 'destroy'])->name('tenant.roles.destroy');
 
                     // Branch Portal Routes
                     Route::prefix('branch/{branch}')->group(function () {
@@ -265,6 +272,7 @@ Route::middleware(['web'])
                     Route::post('contracts', [App\Http\Controllers\Tenant\ContractController::class, 'store'])->name('tenant.contracts.store');
                     Route::get('contracts/{contract}', [App\Http\Controllers\Tenant\ContractController::class, 'show'])->name('tenant.contracts.show');
                     Route::get('contracts/{contract}/edit', [App\Http\Controllers\Tenant\ContractController::class, 'edit'])->name('tenant.contracts.edit');
+                    Route::get('contracts/{contract}/download', [App\Http\Controllers\Tenant\ContractController::class, 'download'])->name('tenant.contracts.download');
                     Route::put('contracts/{contract}', [App\Http\Controllers\Tenant\ContractController::class, 'update'])->name('tenant.contracts.update');
                     Route::delete('contracts/{contract}', [App\Http\Controllers\Tenant\ContractController::class, 'destroy'])->name('tenant.contracts.destroy');
 

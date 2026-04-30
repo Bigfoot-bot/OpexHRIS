@@ -38,23 +38,28 @@ class SubscriptionController extends Controller
             $daysRemaining = $subscription->daysRemaining();
             $canRenewSame  = $daysRemaining <= 7;
             $plans = $allPlans->filter(function($plan) use ($currentPlan, $canRenewSame) {
-                if ($plan->monthly_price > $currentPlan->monthly_price) return true;
+                // Show plans with strictly higher employee capacity
+                if ($plan->max_employees > $currentPlan->max_employees) return true;
+                // Allow renewing the same plan within 7 days of expiry
                 if ($plan->id === $currentPlan->id && $canRenewSame) return true;
                 return false;
             });
-            $currentPlanName = $currentPlan->name;
-            $daysLeft        = $daysRemaining;
-            $isHighestPlan   = $plans->isEmpty();
+            $currentPlanName     = $currentPlan->name;
+            $currentMaxEmployees = $currentPlan->max_employees;
+            $daysLeft            = $daysRemaining;
+            $isHighestPlan       = $plans->isEmpty();
         } else {
-            $plans           = $allPlans;
-            $currentPlanName = null;
-            $isHighestPlan   = false;
-            $daysLeft        = null;
-            $canRenewSame    = false;
+            $plans               = $allPlans;
+            $currentPlanName     = null;
+            $currentMaxEmployees = null;
+            $isHighestPlan       = false;
+            $daysLeft            = null;
+            $canRenewSame        = false;
         }
 
         return view('tenant.subscription.plans', compact(
-            'plans', 'discounts', 'settings', 'currentPlanName', 'isHighestPlan', 'subscription', 'daysLeft', 'canRenewSame'
+            'plans', 'discounts', 'settings', 'currentPlanName', 'currentMaxEmployees',
+            'isHighestPlan', 'subscription', 'daysLeft', 'canRenewSame'
         ));
     }
 
@@ -101,11 +106,16 @@ class SubscriptionController extends Controller
             $currentPlan   = $existing->plan;
             $daysRemaining = $existing->daysRemaining();
             $isSamePlan    = $plan->id === $currentPlan->id;
-            $isLowerPlan   = $plan->monthly_price < $currentPlan->monthly_price;
+            $isLowerPlan   = $plan->max_employees < $currentPlan->max_employees;
+            $isSameCapacity = $plan->max_employees === $currentPlan->max_employees && !$isSamePlan;
 
             if ($isLowerPlan) {
                 return redirect()->route('tenant.subscription.plans')
-                    ->with('error', 'You cannot downgrade to a lower plan while your current subscription is active.');
+                    ->with('error', "You cannot switch to a plan with fewer employees ({$plan->max_employees}) while your current {$currentPlan->name} plan covers {$currentPlan->max_employees} employees.");
+            }
+            if ($isSameCapacity) {
+                return redirect()->route('tenant.subscription.plans')
+                    ->with('error', "This plan covers the same number of employees as your current {$currentPlan->name} plan. Please select a plan with higher employee capacity.");
             }
             if ($isSamePlan && $daysRemaining > 7) {
                 return redirect()->route('tenant.subscription.plans')

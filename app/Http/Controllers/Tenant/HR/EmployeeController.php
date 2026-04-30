@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Tenant\HR;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\FacilitySubscription;
 use App\Models\Tenant\Employee;
 use App\Models\Tenant\LeaveRequest;
 use App\Models\Tenant\PayrollRecord;
@@ -19,6 +20,23 @@ use Illuminate\Support\Str;
 
 class EmployeeController extends Controller
 {
+    private function subscriptionLimit(): array
+    {
+        $tenantId     = tenant('id');
+        $subscription = FacilitySubscription::where('tenant_id', $tenantId)->latest()->first();
+        $plan         = $subscription?->plan;
+        $maxEmployees = $plan?->max_employees ?? PHP_INT_MAX;
+        $current      = Employee::withoutGlobalScopes()->where('tenant_id', $tenantId)->count();
+
+        return [
+            'current'      => $current,
+            'max'          => $maxEmployees,
+            'plan_name'    => $plan?->name ?? 'Current Plan',
+            'at_limit'     => $current >= $maxEmployees,
+            'remaining'    => max(0, $maxEmployees - $current),
+        ];
+    }
+
     public function index(Request $request)
     {
         $branches = \App\Models\Branch::where('tenant_id', tenant('id'))->get();
@@ -44,17 +62,34 @@ class EmployeeController extends Controller
         }
 
         $employees = $query->latest()->paginate(15);
-        return view('tenant.hr.employees.index', compact('employees', 'branches'));
+        $limit     = $this->subscriptionLimit();
+        return view('tenant.hr.employees.index', compact('employees', 'branches', 'limit'));
     }
 
     public function create()
     {
+        $limit = $this->subscriptionLimit();
+
+        if ($limit['at_limit']) {
+            return redirect()->route('tenant.employees.index')
+                ->with('error', "You have reached the maximum of {$limit['max']} employees allowed on your {$limit['plan_name']} plan. Please upgrade your subscription to add more employees.");
+        }
+
         $branches = \App\Models\Branch::where('tenant_id', tenant('id'))->get();
-        return view('tenant.hr.employees.create', compact('branches'));
+        return view('tenant.hr.employees.create', compact('branches', 'limit'));
     }
 
     public function store(Request $request)
     {
+        $limit = $this->subscriptionLimit();
+
+        if ($limit['at_limit']) {
+            return back()->with('error',
+                "Employee limit reached. Your {$limit['plan_name']} plan allows a maximum of {$limit['max']} employees across all branches. " .
+                "You currently have {$limit['current']} employees. Please upgrade your subscription to add more."
+            );
+        }
+
         $validated = $request->validate([
             'first_name'                     => ['required', 'string', 'max:255'],
             'middle_name'                    => ['nullable', 'string', 'max:255'],
@@ -130,8 +165,8 @@ class EmployeeController extends Controller
                     ]
                 );
 
-                $link = 'http://' . request()->getHost() . '/forgot-password';
-                Mail::to($user->email)->send(new EmployeeWelcome($user, $tenantName, $link));
+                $link = 'http://' . request()->getHost() . '/set-password?email=' . urlencode($user->email);
+                Mail::to($user->email)->send(new EmployeeWelcome($user, $tenantName, $link, $password));
             } catch (\Exception $e) {
                 // Silently fail
             }

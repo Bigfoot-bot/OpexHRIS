@@ -1,7 +1,7 @@
 @extends('central.layouts.app')
 
 @section('page-title', $tenant->name)
-@section('page-subtitle', $tenant->slug . '.hris-platform.test')
+@section('page-subtitle', $tenant->domains->first()?->domain ?? $tenant->slug . '.' . parse_url(config('app.url'), PHP_URL_HOST))
 
 @section('page-actions')
     <a href="{{ route('admin.tenants.index') }}"
@@ -66,10 +66,11 @@
                 </div>
                 <div>
                     <p class="text-xs text-gray-400 mb-1">Domain</p>
-                    <a href="http://{{ $tenant->slug }}.hris-platform.test"
+                    @php $tenantDomain = $tenant->domains->first()?->domain ?? $tenant->slug . '.' . parse_url(config('app.url'), PHP_URL_HOST); @endphp
+                    <a href="https://{{ $tenantDomain }}/login"
                        target="_blank"
                        class="text-sm text-emerald-600 hover:text-emerald-800">
-                        {{ $tenant->slug }}.hris-platform.test ↗
+                        {{ $tenantDomain }} ↗
                     </a>
                 </div>
                 <div>

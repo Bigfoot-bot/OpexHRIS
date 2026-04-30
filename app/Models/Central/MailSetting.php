@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class MailSetting extends Model
 {
+    protected $connection = 'mysql';
+
     protected $fillable = [
         'mail_host',
         'mail_port',

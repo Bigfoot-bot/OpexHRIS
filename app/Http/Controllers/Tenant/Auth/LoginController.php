@@ -17,22 +17,27 @@ class LoginController extends Controller
             'email'    => ['required', 'email'],
             'password' => ['required'],
         ]);
+
         $domain = $request->getHost();
         $tenant = Tenant::whereHas('domains', function ($q) use ($domain) {
             $q->where('domain', $domain);
         })->first();
+
         if (!$tenant) {
             return back()->with('error', 'Facility not found.');
         }
+
         $user = \App\Models\Tenant\User::withoutGlobalScopes()
                     ->where('email', $credentials['email'])
                     ->where('tenant_id', $tenant->id)
                     ->first();
+
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
             return back()
                 ->withInput($request->only('email'))
                 ->with('error', 'These credentials do not match our records.');
         }
+
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
         $user->update(['last_login_at' => now()]);
@@ -40,12 +45,10 @@ class LoginController extends Controller
     }
     protected function redirectBasedOnRole($user): \Illuminate\Http\RedirectResponse
     {
-        // Admin always goes to HR portal
         if ($user->is_admin) {
             $user->update(['portal_preference' => 'hr']);
             return redirect()->route('tenant.dashboard');
         }
-        // Branch Manager or Branch HR - respect portal preference
         if ($user->hasAnyRole(['Branch Manager', 'Branch HR']) && $user->branch_id) {
             if ($user->portal_preference === 'employee' && $user->employee_id) {
                 return redirect()->route('tenant.employee.dashboard');
@@ -53,12 +56,10 @@ class LoginController extends Controller
             $branch = \App\Models\Branch::find($user->branch_id);
             if ($branch) return redirect()->route('tenant.branch.dashboard', $branch);
         }
-        // Users with tenant roles go to HR portal
         if ($user->tenantRoles()->count() > 0) {
             $user->update(['portal_preference' => 'hr']);
             return redirect()->route('tenant.dashboard');
         }
-        // No roles = employee portal
         $user->update(['portal_preference' => 'employee']);
         return redirect()->route('tenant.employee.dashboard');
     }
@@ -70,10 +71,3 @@ class LoginController extends Controller
         return redirect()->route('tenant.login');
     }
 }
-
-
-
-
-
-
-

@@ -5,6 +5,7 @@
 
 @section('page-actions')
     <a href="{{ route('tenant.exports.leave-requests') }}" class="bg-white border border-gray-200 text-gray-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50">Export Excel</a>
+    <a href="{{ route('tenant.leave-requests.create') }}"
        class="bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150">
         + New Request
     </a>

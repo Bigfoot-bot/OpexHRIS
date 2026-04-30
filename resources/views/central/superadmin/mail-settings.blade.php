@@ -67,10 +67,10 @@
                     @error('mail_from_name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1.5">From Email Address *</label>
-                    <input type="email" name="mail_from_address" value="{{ old('mail_from_address', $settings->mail_from_address) }}" required
+                    <label class="block text-xs font-medium text-gray-600 mb-1.5">From Email Address <span class="text-gray-400 font-normal">(optional — defaults to Gmail address)</span></label>
+                    <input type="email" name="mail_from_address" id="mail_from_address" value="{{ old('mail_from_address', $settings->mail_from_address) }}"
                            class="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                           placeholder="noreply@yourmail.com"/>
+                           placeholder="Leave blank to use Gmail address"/>
                     @error('mail_from_address') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
             </div>

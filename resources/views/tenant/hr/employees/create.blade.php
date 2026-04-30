@@ -15,6 +15,27 @@
 <form method="POST" action="{{ route('tenant.employees.store') }}">
 @csrf
 
+    {{-- Subscription usage banner --}}
+    @if(isset($limit) && $limit['max'] < PHP_INT_MAX)
+    @php $pct = $limit['max'] > 0 ? min(100, ($limit['current'] / $limit['max']) * 100) : 0; @endphp
+    <div class="mb-5 bg-white rounded-xl border border-green-100 px-5 py-3 flex items-center justify-between">
+        <div>
+            <span class="text-xs font-medium text-gray-600">{{ $limit['plan_name'] }} Plan</span>
+            <span class="text-xs text-gray-400 ml-2">{{ $limit['current'] }} / {{ $limit['max'] }} employees used</span>
+        </div>
+        <div class="w-40 bg-gray-100 rounded-full h-1.5">
+            <div class="h-1.5 rounded-full {{ $pct >= 100 ? 'bg-red-500' : ($pct >= 80 ? 'bg-amber-400' : 'bg-emerald-500') }}"
+                 style="width: {{ $pct }}%"></div>
+        </div>
+    </div>
+    @endif
+
+    @if(session('error'))
+        <div class="bg-red-50 border border-red-100 text-red-700 text-sm rounded-lg px-4 py-3 mb-5">
+            {{ session('error') }}
+        </div>
+    @endif
+
     @if($errors->any())
         <div class="bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg px-4 py-3 mb-6">
             <ul class="list-disc list-inside space-y-1">
@@ -50,9 +71,14 @@
                                class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Email</label>
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">
+                            Email
+                            <span class="text-emerald-600 font-normal">(required for portal access)</span>
+                        </label>
                         <input type="email" name="email" value="{{ old('email') }}"
-                               class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
+                               class="w-full px-3 py-2 rounded-lg border border-emerald-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                               placeholder="employee@example.com"/>
+                        <p class="text-xs text-gray-400 mt-1">A welcome email with login credentials will be sent to this address.</p>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1.5">Phone *</label>
@@ -94,6 +120,9 @@
                         <input type="text" name="nssf_number" value="{{ old('nssf_number') }}"
                                class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
                     </div>
+                </div>
+            </div>
+
             {{-- Bank Details --}}
             <div class="bg-white rounded-xl border border-green-100 p-6">
                 <h2 class="text-sm font-medium text-emerald-900 mb-5">Bank Details</h2>
@@ -146,7 +175,6 @@
                 document.addEventListener('DOMContentLoaded', function() {
                     initBankFields('bank_name_select', 'bank_branch_select', 'bank_branch_manual', 'bank_code');
 
-                    // Handle form submission - merge branch values
                     document.querySelector('form').addEventListener('submit', function() {
                         const branchSelect = document.getElementById('bank_branch_select');
                         const branchManual = document.getElementById('bank_branch_manual');
@@ -157,7 +185,6 @@
                     });
                 });
             </script>
-                </div>
             </div>
 
             {{-- Employment Information --}}

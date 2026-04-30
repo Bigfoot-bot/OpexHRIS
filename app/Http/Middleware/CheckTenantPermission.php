@@ -12,9 +12,26 @@ class CheckTenantPermission
         'tenant.payroll.*'      => 'manage_payroll',
         'tenant.performance.*'  => 'manage_performance',
         'tenant.branches.*'     => 'manage_branches',
-        'tenant.documents.*'    => 'manage_documents',
-        'tenant.assets.*'       => 'manage_assets',
-        'tenant.contracts.*'    => 'manage_contracts',
+        // Employees can view/download documents; only HR/admin can create/edit/delete
+        'tenant.documents.create'          => 'manage_documents',
+        'tenant.documents.store'           => 'manage_documents',
+        'tenant.documents.edit'            => 'manage_documents',
+        'tenant.documents.update'          => 'manage_documents',
+        'tenant.documents.destroy'         => 'manage_documents',
+        'tenant.documents.categories'      => 'manage_documents',
+        'tenant.documents.categories.*'    => 'manage_documents',
+        // Employees can view their assigned assets; only HR/admin can manage
+        'tenant.assets.create'   => 'manage_assets',
+        'tenant.assets.store'    => 'manage_assets',
+        'tenant.assets.edit'     => 'manage_assets',
+        'tenant.assets.update'   => 'manage_assets',
+        'tenant.assets.destroy'  => 'manage_assets',
+        // Employees can view their contracts; only HR/admin can manage
+        'tenant.contracts.create'   => 'manage_contracts',
+        'tenant.contracts.store'    => 'manage_contracts',
+        'tenant.contracts.edit'     => 'manage_contracts',
+        'tenant.contracts.update'   => 'manage_contracts',
+        'tenant.contracts.destroy'  => 'manage_contracts',
         'tenant.positions.*'    => 'manage_recruitment',
         'tenant.applicants.*'   => 'manage_recruitment',
         'tenant.leave-requests.*' => 'manage_leave',
@@ -24,7 +41,12 @@ class CheckTenantPermission
         'tenant.audit.*'        => null, // admin only
         'tenant.subscription.*' => null, // admin only
         'tenant.wallet.*'       => null, // admin only
-        'tenant.announcements.*' => 'manage_announcements',
+        // Employees can view announcements; only admins/HR can create/edit/delete
+        'tenant.announcements.create'  => 'manage_announcements',
+        'tenant.announcements.store'   => 'manage_announcements',
+        'tenant.announcements.edit'    => 'manage_announcements',
+        'tenant.announcements.update'  => 'manage_announcements',
+        'tenant.announcements.destroy' => 'manage_announcements',
         'tenant.settings.*'     => 'manage_settings',
         'tenant.users.*'        => 'manage_users',
     ];

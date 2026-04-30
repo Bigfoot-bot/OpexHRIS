@@ -7,6 +7,7 @@ use App\Models\Document;
 use App\Models\DocumentCategory;
 use App\Models\DocumentAcknowledgment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class DocumentController extends Controller
 {
@@ -54,14 +55,15 @@ class DocumentController extends Controller
         $extension    = $file->getClientOriginalExtension();
         $fileSize     = $file->getSize();
         $filename     = time() . '_' . $originalName;
-        $file->move(public_path('documents/' . tenant('id')), $filename);
+        $storagePath  = 'documents/' . tenant('id') . '/' . $filename;
+        Storage::disk('local')->putFileAs('documents/' . tenant('id'), $file, $filename);
 
         Document::create([
             'tenant_id'               => tenant('id'),
             'category_id'             => $request->category_id,
             'title'                   => $request->title,
             'description'             => $request->description,
-            'file_path'               => 'documents/' . tenant('id') . '/' . $filename,
+            'file_path'               => $storagePath,
             'file_name'               => $originalName,
             'file_type'               => $extension,
             'file_size'               => $fileSize,
@@ -84,16 +86,33 @@ class DocumentController extends Controller
     public function download(Document $document)
     {
         if ($document->tenant_id !== tenant('id')) abort(403);
-        $path = public_path($document->file_path);
-        if (!file_exists($path)) abort(404);
-        return response()->download($path, $document->file_name);
+
+        // Support both old public path and new storage path
+        if (Storage::disk('local')->exists($document->file_path)) {
+            return Storage::disk('local')->download($document->file_path, $document->file_name);
+        }
+
+        // Fallback: old public path (for files uploaded before migration)
+        $publicPath = public_path($document->file_path);
+        if (file_exists($publicPath)) {
+            return response()->download($publicPath, $document->file_name);
+        }
+
+        abort(404);
     }
 
     public function destroy(Document $document)
     {
         if ($document->tenant_id !== tenant('id')) abort(403);
-        $path = public_path($document->file_path);
-        if (file_exists($path)) unlink($path);
+
+        // Try storage disk first, then public fallback
+        if (Storage::disk('local')->exists($document->file_path)) {
+            Storage::disk('local')->delete($document->file_path);
+        } else {
+            $publicPath = public_path($document->file_path);
+            if (file_exists($publicPath)) unlink($publicPath);
+        }
+
         $document->delete();
         return back()->with('success', 'Document deleted successfully!');
     }
