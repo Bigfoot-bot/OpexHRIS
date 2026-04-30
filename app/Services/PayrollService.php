@@ -2,118 +2,119 @@
 
 namespace App\Services;
 
+use App\Models\SystemSetting;
+
 class PayrollService
 {
-    /**
-     * Calculate PAYE (Kenya graduated tax rates 2024)
-     */
+    private function s(): SystemSetting
+    {
+        return SystemSetting::getSettings();
+    }
+
     public function calculatePAYE(float $grossSalary): float
     {
-        $taxableIncome = $grossSalary;
+        $s   = $this->s();
         $tax = 0;
 
-        // Kenya PAYE tax bands 2024
-        if ($taxableIncome <= 24000) {
-            $tax = $taxableIncome * 0.10;
-        } elseif ($taxableIncome <= 32333) {
-            $tax = 2400 + ($taxableIncome - 24000) * 0.25;
-        } elseif ($taxableIncome <= 500000) {
-            $tax = 4483.25 + ($taxableIncome - 32333) * 0.30;
-        } elseif ($taxableIncome <= 800000) {
-            $tax = 144483.25 + ($taxableIncome - 500000) * 0.325;
+        $b1l = (float) $s->paye_band1_limit;
+        $b1r = (float) $s->paye_band1_rate  / 100;
+        $b2l = (float) $s->paye_band2_limit;
+        $b2r = (float) $s->paye_band2_rate  / 100;
+        $b3l = (float) $s->paye_band3_limit;
+        $b3r = (float) $s->paye_band3_rate  / 100;
+        $b4l = (float) $s->paye_band4_limit;
+        $b4r = (float) $s->paye_band4_rate  / 100;
+        $b5r = (float) $s->paye_band5_rate  / 100;
+
+        // Precompute cumulative tax at each band ceiling
+        $tax1 = $b1l * $b1r;
+        $tax2 = $tax1 + ($b2l - $b1l) * $b2r;
+        $tax3 = $tax2 + ($b3l - $b2l) * $b3r;
+        $tax4 = $tax3 + ($b4l - $b3l) * $b4r;
+
+        if ($grossSalary <= $b1l) {
+            $tax = $grossSalary * $b1r;
+        } elseif ($grossSalary <= $b2l) {
+            $tax = $tax1 + ($grossSalary - $b1l) * $b2r;
+        } elseif ($grossSalary <= $b3l) {
+            $tax = $tax2 + ($grossSalary - $b2l) * $b3r;
+        } elseif ($grossSalary <= $b4l) {
+            $tax = $tax3 + ($grossSalary - $b3l) * $b4r;
         } else {
-            $tax = 241983.25 + ($taxableIncome - 800000) * 0.35;
+            $tax = $tax4 + ($grossSalary - $b4l) * $b5r;
         }
 
-        // Personal relief
-        $personalRelief = 2400;
-        $tax = max(0, $tax - $personalRelief);
+        $tax = max(0, $tax - (float) $s->paye_personal_relief);
 
         return round($tax, 2);
     }
 
-    /**
-     * Calculate NHIF (Kenya 2024 rates)
-     */
-    public function calculateNHIF(float $grossSalary): float
+    public function calculateSHA(float $grossSalary): float
     {
-        if ($grossSalary < 5999) return 150;
-        if ($grossSalary <= 7999) return 300;
-        if ($grossSalary <= 11999) return 400;
-        if ($grossSalary <= 14999) return 500;
-        if ($grossSalary <= 19999) return 600;
-        if ($grossSalary <= 24999) return 750;
-        if ($grossSalary <= 29999) return 850;
-        if ($grossSalary <= 34999) return 900;
-        if ($grossSalary <= 39999) return 950;
-        if ($grossSalary <= 44999) return 1000;
-        if ($grossSalary <= 49999) return 1100;
-        if ($grossSalary <= 59999) return 1200;
-        if ($grossSalary <= 69999) return 1300;
-        if ($grossSalary <= 79999) return 1400;
-        if ($grossSalary <= 89999) return 1500;
-        if ($grossSalary <= 99999) return 1600;
-        return 1700;
+        $rate = (float) $this->s()->sha_rate / 100;
+        return round($grossSalary * $rate, 2);
     }
 
-    /**
-     * Calculate NSSF (Kenya 2024 - new rates)
-     * Tier I: 6% of pensionable pay up to KES 7,000 (max KES 420)
-     * Tier II: 6% of pensionable pay between KES 7,001 and KES 36,000
-     */
+    /** @deprecated kept for backward compatibility — use calculateSHA() */
+    public function calculateNHIF(float $grossSalary): float
+    {
+        return $this->calculateSHA($grossSalary);
+    }
+
     public function calculateNSSF(float $grossSalary): array
     {
-        $tierILimit    = 7000;
-        $tierIILimit   = 36000;
-        $rate          = 0.06;
+        $s    = $this->s();
+        $empR = (float) $s->nssf_employee_rate / 100;
+        $erlR = (float) $s->nssf_employer_rate / 100;
+        $t1   = (float) $s->nssf_tier1_limit;
+        $t2   = (float) $s->nssf_tier2_limit;
 
-        // Tier I
-        $tierIPay      = min($grossSalary, $tierILimit);
-        $tierIEmployee = round($tierIPay * $rate, 2);
-        $tierIEmployer = $tierIEmployee;
+        $tier1Pay      = min($grossSalary, $t1);
+        $tier1Employee = round($tier1Pay * $empR, 2);
+        $tier1Employer = round($tier1Pay * $erlR, 2);
 
-        // Tier II
-        $tierIIPay      = max(0, min($grossSalary, $tierIILimit) - $tierILimit);
-        $tierIIEmployee = round($tierIIPay * $rate, 2);
-        $tierIIEmployer = $tierIIEmployee;
+        $tier2Pay      = max(0, min($grossSalary, $t2) - $t1);
+        $tier2Employee = round($tier2Pay * $empR, 2);
+        $tier2Employer = round($tier2Pay * $erlR, 2);
 
         return [
-            'employee' => round($tierIEmployee + $tierIIEmployee, 2),
-            'employer' => round($tierIEmployer + $tierIIEmployer, 2),
+            'employee' => round($tier1Employee + $tier2Employee, 2),
+            'employer' => round($tier1Employer + $tier2Employer, 2),
         ];
     }
 
-    /**
-     * Calculate Housing Levy (1.5% of gross salary)
-     */
     public function calculateHousingLevy(float $grossSalary): float
     {
-        return round($grossSalary * 0.015, 2);
+        $rate = (float) $this->s()->housing_levy_employee_rate / 100;
+        return round($grossSalary * $rate, 2);
     }
 
-    /**
-     * Calculate full payroll for an employee
-     */
+    public function calculateHousingLevyEmployer(float $grossSalary): float
+    {
+        $rate = (float) $this->s()->housing_levy_employer_rate / 100;
+        return round($grossSalary * $rate, 2);
+    }
+
     public function calculate(
         float $basicSalary,
-        float $houseAllowance = 0,
+        float $houseAllowance    = 0,
         float $transportAllowance = 0,
-        float $medicalAllowance = 0,
-        float $otherAllowances = 0,
-        float $overtimePay = 0,
-        float $loanDeduction = 0,
-        float $otherDeductions = 0
+        float $medicalAllowance  = 0,
+        float $otherAllowances   = 0,
+        float $overtimePay       = 0,
+        float $loanDeduction     = 0,
+        float $otherDeductions   = 0
     ): array {
         $grossSalary = $basicSalary + $houseAllowance + $transportAllowance +
                        $medicalAllowance + $otherAllowances + $overtimePay;
 
-        $paye         = $this->calculatePAYE($grossSalary);
-        $nhif         = $this->calculateNHIF($grossSalary);
-        $nssf         = $this->calculateNSSF($grossSalary);
-        $housingLevy  = $this->calculateHousingLevy($grossSalary);
+        $paye        = $this->calculatePAYE($grossSalary);
+        $sha         = $this->calculateSHA($grossSalary);
+        $nssf        = $this->calculateNSSF($grossSalary);
+        $housingLevy = $this->calculateHousingLevy($grossSalary);
 
-        $totalDeductions = $paye + $nhif + $nssf['employee'] + $housingLevy +
-                          $loanDeduction + $otherDeductions;
+        $totalDeductions = $paye + $sha + $nssf['employee'] + $housingLevy +
+                           $loanDeduction + $otherDeductions;
 
         $netSalary = $grossSalary - $totalDeductions;
 
@@ -126,7 +127,7 @@ class PayrollService
             'overtime_pay'        => round($overtimePay, 2),
             'gross_salary'        => round($grossSalary, 2),
             'paye'                => $paye,
-            'nhif'                => $nhif,
+            'nhif'                => $sha,   // stored as nhif column in DB
             'nssf_employee'       => $nssf['employee'],
             'nssf_employer'       => $nssf['employer'],
             'housing_levy'        => $housingLevy,

@@ -101,6 +101,10 @@ Route::middleware(['auth:super_admin', 'throttle:admin'])->prefix('admin')->name
     Route::post('general-settings', [App\Http\Controllers\Central\SuperAdmin\GeneralSettingsController::class, 'update'])->name('general-settings.update');
     Route::post('general-settings/change-password', [App\Http\Controllers\Central\SuperAdmin\GeneralSettingsController::class, 'changePassword'])->name('general-settings.change-password');
 
+    // Statutory Deductions
+    Route::get('statutory-deductions', [App\Http\Controllers\Central\SuperAdmin\StatutoryDeductionsController::class, 'index'])->name('statutory-deductions.index');
+    Route::post('statutory-deductions', [App\Http\Controllers\Central\SuperAdmin\StatutoryDeductionsController::class, 'update'])->name('statutory-deductions.update');
+
     // Subscription Plans
     Route::get('subscription-plans', [App\Http\Controllers\Central\SuperAdmin\SubscriptionPlanController::class, 'index'])->name('subscription-plans.index');
     Route::post('subscription-plans', [App\Http\Controllers\Central\SuperAdmin\SubscriptionPlanController::class, 'store'])->name('subscription-plans.store');
