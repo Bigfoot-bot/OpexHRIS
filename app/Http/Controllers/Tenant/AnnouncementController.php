@@ -96,7 +96,7 @@ class AnnouncementController extends Controller
             ]);
 
             if ($sendEmail) {
-                $users = User::where('tenant_id', $tenantId)->where('employment_status', 'active')->get();
+                $users = User::where('tenant_id', $tenantId)->whereNotNull('employee_id')->get();
                 foreach ($users as $user) {
                     try {
                         Mail::to($user->email)->send(new AnnouncementAlert(
