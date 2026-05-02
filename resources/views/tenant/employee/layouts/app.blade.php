@@ -196,7 +196,6 @@
                                 })
                                 ->where('created_at', '>=', now()->subDays(7))
                                 ->count();
-                            $unreadCount += $newAnnouncementCount;
                         } catch (\Exception $e) {
                             $newAnnouncementCount = 0;
                         }
