@@ -47,7 +47,7 @@ class BrandingSettingsController extends Controller
         // Ensure the branding directory exists
         $brandingPath = public_path('branding');
         if (!is_dir($brandingPath)) {
-            mkdir($brandingPath, 0755, true);
+            mkdir($brandingPath, 0777, true);
         }
 
         if ($request->hasFile('logo') && $request->file('logo')->isValid()) {
