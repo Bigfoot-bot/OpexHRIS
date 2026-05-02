@@ -96,6 +96,23 @@
                            class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
                 </div>
 
+                {{-- Certificate --}}
+                <input type="hidden" name="certificate_provided" value="0">
+                <label class="flex items-center gap-3 cursor-pointer group">
+                    <div class="relative">
+                        <input type="checkbox" name="certificate_provided" value="1"
+                               id="cert-toggle"
+                               {{ old('certificate_provided') ? 'checked' : '' }}
+                               class="sr-only peer">
+                        <div class="w-10 h-6 bg-gray-200 peer-checked:bg-emerald-600 rounded-full transition-colors"></div>
+                        <div class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"></div>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-gray-700">Provide Certificate on Completion</p>
+                        <p class="text-xs text-gray-400">Employees will be able to download a PDF certificate when marked as completed</p>
+                    </div>
+                </label>
+
                 <div class="grid grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1.5">CPD Points</label>

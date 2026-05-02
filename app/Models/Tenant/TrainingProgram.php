@@ -22,14 +22,16 @@ class TrainingProgram extends Model
         'end_date',
         'location',
         'meeting_link',
+        'certificate_provided',
         'max_participants',
         'status',
     ];
 
     protected $casts = [
-        'start_date' => 'date',
-        'end_date'   => 'date',
-        'cost'       => 'decimal:2',
+        'start_date'           => 'date',
+        'end_date'             => 'date',
+        'cost'                 => 'decimal:2',
+        'certificate_provided' => 'boolean',
     ];
 
     public function enrollments()

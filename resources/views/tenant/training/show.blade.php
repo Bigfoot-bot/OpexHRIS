@@ -94,14 +94,18 @@
                             </td>
                             <td class="px-6 py-3">
                                 @if($enrollment->certificate_issued)
-                                    <span class="text-xs bg-emerald-50 text-emerald-600 px-2 py-1 rounded-full">Issued</span>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs bg-emerald-50 text-emerald-600 px-2 py-1 rounded-full">Issued</span>
+                                        <a href="{{ route('tenant.training.certificate', $enrollment) }}"
+                                           class="text-xs text-blue-600 hover:text-blue-800 underline">Download</a>
+                                    </div>
                                 @else
                                     <span class="text-xs text-gray-400">—</span>
                                 @endif
                             </td>
                             <td class="px-6 py-3">
                                 <form method="POST" action="{{ route('tenant.training.enrollment.update', $enrollment) }}"
-                                      class="flex items-center gap-2">
+                                      class="flex items-center gap-2 flex-wrap">
                                     @csrf
                                     <select name="status"
                                             class="px-2 py-1 rounded border border-gray-200 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
@@ -116,6 +120,15 @@
                                     <input type="number" name="score" value="{{ $enrollment->score }}"
                                            min="0" max="100" placeholder="Score"
                                            class="w-16 px-2 py-1 rounded border border-gray-200 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"/>
+                                    @if($training->certificate_provided)
+                                        <input type="hidden" name="certificate_issued" value="0">
+                                        <label class="flex items-center gap-1 text-xs text-gray-600 cursor-pointer">
+                                            <input type="checkbox" name="certificate_issued" value="1"
+                                                   {{ $enrollment->certificate_issued ? 'checked' : '' }}
+                                                   class="rounded border-gray-300 text-emerald-600">
+                                            Issue Cert
+                                        </label>
+                                    @endif
                                     <button type="submit"
                                             class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1 rounded-lg">
                                         Save
@@ -179,6 +192,14 @@
                 <div>
                     <p class="text-xs text-gray-400">Max Participants</p>
                     <p class="text-sm text-gray-700">{{ $training->max_participants ?? 'Unlimited' }}</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400">Certificate</p>
+                    @if($training->certificate_provided)
+                        <span class="text-xs bg-amber-50 text-amber-600 px-2 py-1 rounded-full">Provided on completion</span>
+                    @else
+                        <p class="text-sm text-gray-400">Not provided</p>
+                    @endif
                 </div>
             </div>
 

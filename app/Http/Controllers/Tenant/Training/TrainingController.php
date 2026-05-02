@@ -9,6 +9,7 @@ use App\Models\Tenant\TrainingProgram;
 use App\Models\Tenant\TrainingEnrollment;
 use App\Models\Tenant\User;
 use App\Mail\TrainingEnrolled;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 
@@ -54,9 +55,10 @@ class TrainingController extends Controller
             'start_date'       => ['required', 'date'],
             'end_date'         => ['required', 'date', 'gte:start_date'],
             'location'         => ['nullable', 'string'],
-            'meeting_link'     => ['nullable', 'url'],
-            'max_participants' => ['nullable', 'integer'],
-            'audience'         => ['required', 'in:all_employees,by_department,specific_employees'],
+            'meeting_link'         => ['nullable', 'url'],
+            'certificate_provided' => ['nullable', 'boolean'],
+            'max_participants'     => ['nullable', 'integer'],
+            'audience'             => ['required', 'in:all_employees,by_department,specific_employees'],
             'department'       => ['required_if:audience,by_department', 'nullable', 'string'],
             'employee_ids'     => ['required_if:audience,specific_employees', 'array', 'min:1'],
         ]);
@@ -75,9 +77,10 @@ class TrainingController extends Controller
             'cost'             => $request->cost,
             'start_date'       => $request->start_date,
             'end_date'         => $request->end_date,
-            'location'         => $request->location,
-            'meeting_link'     => $request->meeting_link,
-            'max_participants' => $request->max_participants,
+            'location'             => $request->location,
+            'meeting_link'         => $request->meeting_link,
+            'certificate_provided' => $request->boolean('certificate_provided'),
+            'max_participants'     => $request->max_participants,
         ]);
 
         if ($request->audience === 'all_employees') {
@@ -191,7 +194,7 @@ class TrainingController extends Controller
             'cpd_points_earned'  => ['nullable', 'integer'],
             'score'              => ['nullable', 'numeric'],
             'completion_date'    => ['nullable', 'date'],
-            'certificate_issued' => ['boolean'],
+            'certificate_issued' => ['nullable', 'boolean'],
         ]);
 
         $validated['certificate_issued'] = $request->boolean('certificate_issued');
@@ -199,5 +202,30 @@ class TrainingController extends Controller
         $enrollment->update($validated);
 
         return back()->with('success', 'Enrollment updated successfully!');
+    }
+
+    public function certificate(TrainingEnrollment $enrollment)
+    {
+        $enrollment->load('trainingProgram', 'employee');
+
+        if (!$enrollment->certificate_issued) {
+            abort(404, 'Certificate has not been issued for this enrollment.');
+        }
+
+        $user = auth()->user();
+        if ($user->employee_id && $user->employee_id !== $enrollment->employee_id) {
+            abort(403);
+        }
+
+        $pdf = Pdf::loadView('tenant.training.certificate', [
+            'enrollment' => $enrollment,
+            'training'   => $enrollment->trainingProgram,
+            'employee'   => $enrollment->employee,
+            'org'        => tenant('name'),
+        ])->setPaper('a4', 'landscape');
+
+        $filename = 'certificate-' . str_replace(' ', '-', strtolower($enrollment->employee->full_name)) . '.pdf';
+
+        return $pdf->download($filename);
     }
 }

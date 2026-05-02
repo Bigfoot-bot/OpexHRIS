@@ -473,6 +473,7 @@ Route::middleware(['web'])
                     Route::delete('training/{training}', [TrainingController::class, 'destroy'])->name('tenant.training.destroy');
                     Route::post('training/{training}/enroll', [TrainingController::class, 'enroll'])->name('tenant.training.enroll');
                     Route::post('training/enrollments/{enrollment}/update', [TrainingController::class, 'updateEnrollment'])->name('tenant.training.enrollment.update');
+                    Route::get('training/enrollments/{enrollment}/certificate', [TrainingController::class, 'certificate'])->name('tenant.training.certificate');
                 });
             });
         }
