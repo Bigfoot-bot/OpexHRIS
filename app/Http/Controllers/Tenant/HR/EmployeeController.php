@@ -22,27 +22,7 @@ class EmployeeController extends Controller
 {
     private function departmentList(): array
     {
-        $predefined = [
-            'Administration', 'Anaesthesia', 'Dental', 'Dietetics & Nutrition',
-            'Emergency Department', 'Finance & Accounts', 'General Medicine',
-            'Human Resources', 'ICU / Critical Care', 'Information Technology',
-            'Laboratory / Pathology', 'Maintenance & Engineering', 'Maternity & Gynaecology',
-            'Medical Records', 'Mental Health & Psychiatry', 'Nursing',
-            'Outpatient Department (OPD)', 'Paediatrics', 'Pharmacy', 'Physiotherapy',
-            'Radiology & Imaging', 'Security', 'Surgery / Theatre',
-        ];
-
-        $custom = Employee::where('tenant_id', tenant('id'))
-                          ->whereNotNull('department')
-                          ->distinct()
-                          ->pluck('department')
-                          ->toArray();
-
-        return collect(array_merge($predefined, $custom))
-                ->unique()
-                ->sort()
-                ->values()
-                ->toArray();
+        return \App\Models\TenantSetting::get('departments', []);
     }
 
     private function subscriptionLimit(): array
@@ -170,7 +150,7 @@ class EmployeeController extends Controller
                 );
             }
         } catch (\Exception $e) {
-            \Log::error('Leave balance allocation failed: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Leave balance allocation failed: ' . $e->getMessage());
         }
 
         // Create user account and send welcome email if email is provided
