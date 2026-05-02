@@ -5,6 +5,7 @@
 
 @section('page-actions')
     <a href="{{ route('tenant.exports.payroll', ['period_id' => $payroll->id]) }}" class="bg-white border border-gray-200 text-gray-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50">Export Excel</a>
+    @if($payroll->status === 'draft')
         <button onclick="document.getElementById('approve-modal').style.display='flex'"
                 class="bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium px-4 py-2 rounded-lg">
             Approve Payroll
