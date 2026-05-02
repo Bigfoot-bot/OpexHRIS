@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\BrandingSetting;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -16,6 +18,15 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureRateLimiting();
+
+        // Share branding with all central admin views so layout reflects saved settings
+        View::composer('central.*', function ($view) {
+            try {
+                $view->with('branding', BrandingSetting::first());
+            } catch (\Exception $e) {
+                // Table may not exist during migrations
+            }
+        });
     }
 
     protected function configureRateLimiting(): void

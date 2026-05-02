@@ -3,6 +3,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 class BrandingSetting extends Model
 {
+    protected $connection = 'mysql';
+
     protected $fillable = [
         'platform_name',
         'platform_tagline',
