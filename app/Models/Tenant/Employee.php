@@ -76,6 +76,11 @@ class Employee extends Model
             default    => 'gray',
         };
     }
+    public function branch()
+    {
+        return $this->belongsTo(\App\Models\Branch::class);
+    }
+
     public function leaveRequests()
     {
         return $this->hasMany(LeaveRequest::class);

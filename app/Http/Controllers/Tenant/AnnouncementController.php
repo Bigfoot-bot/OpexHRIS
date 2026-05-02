@@ -103,7 +103,7 @@ class AnnouncementController extends Controller
                             tap(new Announcement(['title' => $request->title, 'body' => $request->body, 'meeting_link' => $request->meeting_link])),
                             $user->name,
                             tenant('name') ?? 'Facility Admin',
-                            'http://' . request()->getHost() . '/announcements'
+                            'https://' . request()->getHost() . '/announcements'
                         ));
                     } catch (\Exception $e) {}
                 }
@@ -138,7 +138,7 @@ class AnnouncementController extends Controller
                         $ann,
                         $employee->first_name . ' ' . $employee->last_name,
                         tenant('name') ?? 'Facility Admin',
-                        'http://' . request()->getHost() . '/announcements'
+                        'https://' . request()->getHost() . '/announcements'
                     ));
                 } catch (\Exception $e) {}
             }
