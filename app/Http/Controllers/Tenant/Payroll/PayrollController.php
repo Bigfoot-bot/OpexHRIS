@@ -11,6 +11,8 @@ use App\Models\Tenant\User;
 use App\Services\PayrollService;
 use App\Services\NotificationService;
 use App\Mail\PayslipPublished;
+use App\Models\Central\Tenant;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
@@ -130,26 +132,38 @@ class PayrollController extends Controller
         NotificationService::payrollApproved($payroll->name);
         AuditLog::log('approved', 'Payroll', "Approved payroll for {$payroll->name}");
 
-        // Email each employee their payslip notification
+        // Email each employee their payslip with PDF attachment
         try {
             $payroll->load('records.employee');
+            $tenant   = Tenant::find(tenant('id'));
+            $logoPath = ($tenant->logo && file_exists(public_path('logos/' . $tenant->logo)))
+                        ? public_path('logos/' . $tenant->logo)
+                        : null;
+
             foreach ($payroll->records as $record) {
                 $employee = $record->employee;
                 $user     = User::where('tenant_id', tenant('id'))
                                 ->where('employee_id', $employee->id)
                                 ->first();
-                if ($user) {
-                    $link = 'http://' . request()->getHost() . '/my/payslips';
-                    Mail::to($user->email)->send(new PayslipPublished(
-                        $user,
-                        $payroll->name,
-                        $record->net_salary,
-                        $link
-                    ));
-                }
+                if (!$user) continue;
+
+                $pdf = Pdf::loadView('tenant.payroll.payslip', compact('payroll', 'record', 'tenant', 'logoPath'));
+                $pdf->setPaper('a4', 'portrait');
+                $pdfContent  = $pdf->output();
+                $pdfFilename = 'Payslip-' . $employee->employee_number . '-' . $payroll->name . '.pdf';
+
+                $link = 'https://' . request()->getHost() . '/my/payslips';
+                Mail::to($user->email)->send(new PayslipPublished(
+                    $user,
+                    $payroll->name,
+                    $record->net_salary,
+                    $link,
+                    $pdfContent,
+                    $pdfFilename
+                ));
             }
         } catch (\Exception $e) {
-            // Silently fail
+            // Silently fail — payroll is already approved
         }
 
         return back()->with('success', 'Payroll approved and employees notified!');
