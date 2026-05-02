@@ -52,7 +52,7 @@ class SetPasswordController extends Controller
 
         // Send confirmation email
         try {
-            $loginLink = 'http://' . $request->getHost() . '/login';
+            $loginLink = 'https://' . $request->getHost() . '/login';
             Mail::to($user->email)->send(new PasswordSetConfirmation($user, tenant('name') ?? 'HRIS Portal', $loginLink));
         } catch (\Exception $e) {
             // Silently fail — password is already updated

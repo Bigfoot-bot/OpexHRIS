@@ -165,7 +165,7 @@ class EmployeeController extends Controller
                     ]
                 );
 
-                $link = 'http://' . request()->getHost() . '/set-password?email=' . urlencode($user->email);
+                $link = 'https://' . request()->getHost() . '/set-password?email=' . urlencode($user->email);
                 Mail::to($user->email)->send(new EmployeeWelcome($user, $tenantName, $link, $password));
             } catch (\Exception $e) {
                 // Silently fail
