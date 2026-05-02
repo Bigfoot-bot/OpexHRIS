@@ -98,20 +98,22 @@
 
                 {{-- Certificate --}}
                 <input type="hidden" name="certificate_provided" value="0">
-                <label class="flex items-center gap-3 cursor-pointer group">
-                    <div class="relative">
-                        <input type="checkbox" name="certificate_provided" value="1"
-                               id="cert-toggle"
-                               {{ old('certificate_provided') ? 'checked' : '' }}
-                               class="sr-only peer">
-                        <div class="w-10 h-6 bg-gray-200 peer-checked:bg-emerald-600 rounded-full transition-colors"></div>
-                        <div class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"></div>
-                    </div>
+                <div id="cert-card"
+                     onclick="toggleCert()"
+                     class="flex items-center gap-4 border-2 rounded-xl p-4 cursor-pointer transition-all {{ old('certificate_provided') ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300' }}">
+                    <input type="checkbox" name="certificate_provided" value="1"
+                           id="cert-checkbox"
+                           {{ old('certificate_provided') ? 'checked' : '' }}
+                           onclick="event.stopPropagation(); toggleCert()"
+                           class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500">
+                    <svg id="cert-icon" class="w-5 h-5 flex-shrink-0 {{ old('certificate_provided') ? 'text-emerald-600' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
                     <div>
-                        <p class="text-xs font-medium text-gray-700">Provide Certificate on Completion</p>
-                        <p class="text-xs text-gray-400">Employees will be able to download a PDF certificate when marked as completed</p>
+                        <p class="text-xs font-semibold text-gray-700">Provide Certificate on Completion</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Employees can download a PDF certificate when marked as completed</p>
                     </div>
-                </label>
+                </div>
 
                 <div class="grid grid-cols-3 gap-4">
                     <div>
@@ -266,6 +268,20 @@
 </div>
 
 <script>
+function toggleCert() {
+    var cb   = document.getElementById('cert-checkbox');
+    var card = document.getElementById('cert-card');
+    var icon = document.getElementById('cert-icon');
+    cb.checked = !cb.checked;
+    if (cb.checked) {
+        card.className = card.className.replace('border-gray-200 hover:border-gray-300', 'border-emerald-500 bg-emerald-50');
+        icon.className = icon.className.replace('text-gray-400', 'text-emerald-600');
+    } else {
+        card.className = card.className.replace('border-emerald-500 bg-emerald-50', 'border-gray-200 hover:border-gray-300');
+        icon.className = icon.className.replace('text-emerald-600', 'text-gray-400');
+    }
+}
+
 function setAudience(value) {
     var isSpecific = value === 'specific_employees';
     var isDept     = value === 'by_department';
