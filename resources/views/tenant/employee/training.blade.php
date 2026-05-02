@@ -149,8 +149,8 @@
                     <p class="text-xs text-gray-400 mb-4 leading-relaxed">{{ $prog->description }}</p>
                 @endif
 
-                {{-- Meeting link button for online trainings --}}
-                @if($prog->type === 'online' && $prog->meeting_link)
+                {{-- Meeting link button --}}
+                @if($prog->meeting_link)
                     <a href="{{ $prog->meeting_link }}" target="_blank"
                        class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 py-2 rounded-lg transition-colors">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

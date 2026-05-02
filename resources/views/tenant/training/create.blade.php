@@ -88,9 +88,9 @@
                     </div>
                 </div>
 
-                {{-- Meeting link — shown only when type = online --}}
-                <div id="meeting-link-wrapper" style="{{ old('type') === 'online' ? '' : 'display:none;' }}">
-                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Meeting Link <span class="text-gray-400">(Zoom / Google Meet)</span></label>
+                {{-- Meeting link --}}
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Meeting Link <span class="text-gray-400">(Zoom / Google Meet — optional)</span></label>
                     <input type="url" name="meeting_link" value="{{ old('meeting_link') }}"
                            placeholder="https://zoom.us/j/xxx  or  https://meet.google.com/xxx"
                            class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
@@ -249,17 +249,6 @@
 </div>
 
 <script>
-// Meeting link toggle
-var typeSelect = document.querySelector('[name="type"]');
-function toggleMeetingLink() {
-    document.getElementById('meeting-link-wrapper').style.display =
-        typeSelect.value === 'online' ? '' : 'none';
-    if (typeSelect.value !== 'online') {
-        document.querySelector('[name="meeting_link"]').value = '';
-    }
-}
-typeSelect.addEventListener('change', toggleMeetingLink);
-
 function setAudience(value) {
     var isSpecific = value === 'specific_employees';
     var isDept     = value === 'by_department';

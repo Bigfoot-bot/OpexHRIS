@@ -33,7 +33,7 @@
                     </table>
 
                     {{-- Meeting link button for online trainings --}}
-                    @if($training->type === 'online' && $training->meeting_link)
+                    @if($training->meeting_link)
                     <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
                         <tr><td align="center">
                             <a href="{{ $training->meeting_link }}"
