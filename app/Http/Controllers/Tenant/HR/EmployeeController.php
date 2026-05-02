@@ -75,8 +75,13 @@ class EmployeeController extends Controller
                 ->with('error', "You have reached the maximum of {$limit['max']} employees allowed on your {$limit['plan_name']} plan. Please upgrade your subscription to add more employees.");
         }
 
-        $branches = \App\Models\Branch::where('tenant_id', tenant('id'))->get();
-        return view('tenant.hr.employees.create', compact('branches', 'limit'));
+        $branches    = \App\Models\Branch::where('tenant_id', tenant('id'))->get();
+        $departments = Employee::where('tenant_id', tenant('id'))
+                               ->whereNotNull('department')
+                               ->distinct()
+                               ->orderBy('department')
+                               ->pluck('department');
+        return view('tenant.hr.employees.create', compact('branches', 'limit', 'departments'));
     }
 
     public function store(Request $request)
@@ -198,8 +203,13 @@ class EmployeeController extends Controller
 
     public function edit(Employee $employee)
     {
-        $branches = \App\Models\Branch::where('tenant_id', tenant('id'))->get();
-        return view('tenant.hr.employees.edit', compact('employee', 'branches'));
+        $branches    = \App\Models\Branch::where('tenant_id', tenant('id'))->get();
+        $departments = Employee::where('tenant_id', tenant('id'))
+                               ->whereNotNull('department')
+                               ->distinct()
+                               ->orderBy('department')
+                               ->pluck('department');
+        return view('tenant.hr.employees.edit', compact('employee', 'branches', 'departments'));
     }
 
     public function update(Request $request, Employee $employee)

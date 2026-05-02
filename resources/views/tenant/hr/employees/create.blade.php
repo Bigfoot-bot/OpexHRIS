@@ -194,7 +194,14 @@
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1.5">Department *</label>
                         <input type="text" name="department" value="{{ old('department') }}" required
+                               list="dept-list"
+                               placeholder="Select or type department"
                                class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
+                        <datalist id="dept-list">
+                            @foreach($departments as $dept)
+                                <option value="{{ $dept }}">
+                            @endforeach
+                        </datalist>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1.5">Job Title *</label>
