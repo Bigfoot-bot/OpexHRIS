@@ -16,7 +16,7 @@ class AnnouncementAlert extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: 'New Announcement — ' . $this->announcement->title);
+        return new Envelope(subject: 'New Announcement: ' . $this->announcement->title);
     }
 
     public function content(): Content

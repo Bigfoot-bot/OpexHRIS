@@ -15,7 +15,7 @@
                     <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;background:#f0fdf4;border-radius:10px;padding:16px;">
                         <tr><td style="font-size:13px;color:#6b7280;padding:4px 0;"><strong style="color:#064e3b;">Title:</strong> {{ $announcement->title }}</td></tr>
                         <tr><td style="font-size:13px;color:#6b7280;padding:4px 0;"><strong style="color:#064e3b;">From:</strong> {{ $sender }}</td></tr>
-                        <tr><td style="font-size:13px;color:#6b7280;padding:4px 0;"><strong style="color:#064e3b;">Date:</strong> {{ $announcement->created_at->format('M d, Y h:i A') }}</td></tr>
+                        <tr><td style="font-size:13px;color:#6b7280;padding:4px 0;"><strong style="color:#064e3b;">Date:</strong> {{ ($announcement->created_at ?? now())->format('M d, Y h:i A') }}</td></tr>
                         <tr><td style="font-size:13px;color:#6b7280;padding:8px 0 0;"><strong style="color:#064e3b;">Message:</strong><br/><span style="color:#374151;">{{ $announcement->body }}</span></td></tr>
                     </table>
                     @if($announcement->meeting_link)
@@ -37,7 +37,7 @@
                     <p style="font-size:12px;color:#9ca3af;text-align:center;margin:0;">This is an automated notification from OpEx HRIS.</p>
                 </td></tr>
                 <tr><td align="center" style="padding-top:24px;">
-                    <p style="font-size:11px;color:#9ca3af;margin:0;">© {{ date('Y') }} OpEx Healthcare. All rights reserved.</p>
+                    <p style="font-size:11px;color:#9ca3af;margin:0;">ï¿½ {{ date('Y') }} OpEx Healthcare. All rights reserved.</p>
                 </td></tr>
             </table>
         </td></tr>

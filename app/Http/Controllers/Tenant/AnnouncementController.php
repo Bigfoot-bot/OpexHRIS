@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Announcement;
 use App\Models\Branch;
 use App\Models\Tenant\Employee;
+use App\Models\Tenant\Notification as TenantNotification;
 use App\Models\Tenant\User;
 use App\Mail\AnnouncementAlert;
 use Illuminate\Http\Request;
@@ -95,13 +96,24 @@ class AnnouncementController extends Controller
                 'branch_id'    => null,
             ]);
 
-            if ($sendEmail) {
-                $users = User::where('tenant_id', $tenantId)->whereNotNull('employee_id')->get();
-                foreach ($users as $user) {
+            $users = User::where('tenant_id', $tenantId)->whereNotNull('employee_id')->get();
+            foreach ($users as $empUser) {
+                TenantNotification::create([
+                    'tenant_id' => $tenantId,
+                    'user_id'   => $empUser->id,
+                    'title'     => 'New Announcement',
+                    'message'   => $request->title,
+                    'type'      => 'info',
+                    'link'      => route('tenant.announcements.index'),
+                ]);
+
+                if ($sendEmail) {
                     try {
-                        Mail::to($user->email)->send(new AnnouncementAlert(
-                            tap(new Announcement(['title' => $request->title, 'body' => $request->body, 'meeting_link' => $request->meeting_link])),
-                            $user->name,
+                        $ann = new Announcement(['title' => $request->title, 'body' => $request->body, 'meeting_link' => $request->meeting_link]);
+                        $ann->created_at = now();
+                        Mail::to($empUser->email)->send(new AnnouncementAlert(
+                            $ann,
+                            $empUser->name,
                             tenant('name') ?? 'Facility Admin',
                             'https://' . request()->getHost() . '/announcements'
                         ));
@@ -131,9 +143,22 @@ class AnnouncementController extends Controller
                 'branch_id'    => null,
             ]);
 
+            $empUser = User::where('tenant_id', $tenantId)->where('employee_id', $employee->id)->first();
+            if ($empUser) {
+                TenantNotification::create([
+                    'tenant_id' => $tenantId,
+                    'user_id'   => $empUser->id,
+                    'title'     => 'New Announcement',
+                    'message'   => $request->title,
+                    'type'      => 'info',
+                    'link'      => route('tenant.announcements.index'),
+                ]);
+            }
+
             if ($sendEmail && $employee->email) {
                 try {
                     $ann = new Announcement(['title' => $request->title, 'body' => $request->body, 'meeting_link' => $request->meeting_link]);
+                    $ann->created_at = now();
                     Mail::to($employee->email)->send(new AnnouncementAlert(
                         $ann,
                         $employee->first_name . ' ' . $employee->last_name,
