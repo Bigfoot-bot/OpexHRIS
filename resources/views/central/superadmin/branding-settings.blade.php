@@ -10,6 +10,21 @@
         <div class="bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm rounded-lg px-4 py-3">{{ session('success') }}</div>
     @endif
 
+    @if(session('error'))
+        <div class="bg-red-50 border border-red-100 text-red-700 text-sm rounded-lg px-4 py-3">{{ session('error') }}</div>
+    @endif
+
+    @if($errors->any())
+        <div class="bg-red-50 border border-red-100 text-red-700 text-sm rounded-lg px-4 py-3">
+            <p class="font-medium mb-1">Please fix the following errors:</p>
+            <ul class="list-disc list-inside space-y-0.5">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <form method="POST" action="{{ route('admin.branding-settings.update') }}" enctype="multipart/form-data">
         @csrf
 
