@@ -65,9 +65,10 @@ class AnnouncementController extends Controller
                         ->orderBy('first_name')
                         ->get();
 
-        $branches = Branch::where('tenant_id', tenant('id'))->orderBy('name')->get();
+        $branches    = Branch::where('tenant_id', tenant('id'))->orderBy('name')->get();
+        $departments = \App\Models\TenantSetting::get('departments', []);
 
-        return view('tenant.announcements.create', compact('employees', 'branches'));
+        return view('tenant.announcements.create', compact('employees', 'branches', 'departments'));
     }
 
     public function store(Request $request)
@@ -76,8 +77,9 @@ class AnnouncementController extends Controller
             'title'        => ['required', 'string', 'max:255'],
             'body'         => ['required', 'string'],
             'send_email'   => ['nullable', 'boolean'],
-            'audience'     => ['required', 'in:all_employees,specific_employees'],
+            'audience'     => ['required', 'in:all_employees,specific_employees,by_department'],
             'employee_ids' => ['required_if:audience,specific_employees', 'array', 'min:1'],
+            'department'   => ['required_if:audience,by_department', 'nullable', 'string'],
         ]);
 
         $tenantId  = tenant('id');
@@ -123,6 +125,57 @@ class AnnouncementController extends Controller
 
             return redirect()->route('tenant.announcements.index')
                              ->with('success', 'Announcement sent to all employees.');
+        }
+
+        // By department
+        if ($request->audience === 'by_department') {
+            $employees = Employee::where('tenant_id', $tenantId)
+                            ->where('department', $request->department)
+                            ->where('employment_status', 'active')
+                            ->get();
+
+            foreach ($employees as $employee) {
+                Announcement::create([
+                    'title'        => $request->title,
+                    'body'         => $request->body,
+                    'meeting_link' => $request->meeting_link,
+                    'type'         => 'facility',
+                    'sender_type'  => 'tenant',
+                    'tenant_id'    => $tenantId,
+                    'send_email'   => $sendEmail,
+                    'employee_id'  => $employee->id,
+                    'branch_id'    => null,
+                ]);
+
+                $empUser = User::where('tenant_id', $tenantId)->where('employee_id', $employee->id)->first();
+                if ($empUser) {
+                    TenantNotification::create([
+                        'tenant_id' => $tenantId,
+                        'user_id'   => $empUser->id,
+                        'title'     => 'New Announcement',
+                        'message'   => $request->title,
+                        'type'      => 'info',
+                        'link'      => route('tenant.announcements.index'),
+                    ]);
+                }
+
+                if ($sendEmail && $employee->email) {
+                    try {
+                        $ann = new Announcement(['title' => $request->title, 'body' => $request->body, 'meeting_link' => $request->meeting_link]);
+                        $ann->created_at = now();
+                        Mail::to($employee->email)->send(new AnnouncementAlert(
+                            $ann,
+                            $employee->first_name . ' ' . $employee->last_name,
+                            tenant('name') ?? 'Facility Admin',
+                            'https://' . request()->getHost() . '/announcements'
+                        ));
+                    } catch (\Exception $e) {}
+                }
+            }
+
+            $count = $employees->count();
+            return redirect()->route('tenant.announcements.index')
+                             ->with('success', "Announcement sent to {$count} " . ($count === 1 ? 'employee' : 'employees') . " in the {$request->department} department.");
         }
 
         // Specific employees

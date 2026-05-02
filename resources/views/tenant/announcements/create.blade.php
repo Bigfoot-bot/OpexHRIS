@@ -62,19 +62,47 @@
                             </div>
                         </label>
                         <label class="flex-1 cursor-pointer">
+                            <input type="radio" name="audience" value="by_department" id="aud-dept"
+                                   {{ old('audience') === 'by_department' ? 'checked' : '' }}
+                                   style="position:absolute;opacity:0;width:0;height:0;">
+                            <div id="card-dept"
+                                 class="border-2 rounded-xl p-3 text-center transition-all {{ old('audience') === 'by_department' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300' }}">
+                                <svg class="w-5 h-5 mx-auto mb-1 {{ old('audience') === 'by_department' ? 'text-emerald-600' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                </svg>
+                                <p class="text-xs font-semibold text-gray-700">By Department</p>
+                                <p class="text-xs text-gray-400 mt-0.5">All in a dept.</p>
+                            </div>
+                        </label>
+                        <label class="flex-1 cursor-pointer">
                             <input type="radio" name="audience" value="specific_employees" id="aud-specific"
                                    {{ old('audience') === 'specific_employees' ? 'checked' : '' }}
                                    style="position:absolute;opacity:0;width:0;height:0;">
                             <div id="card-specific"
-                                 class="border-2 rounded-xl p-3 text-center transition-all border-gray-200 hover:border-gray-300">
-                                <svg class="w-5 h-5 mx-auto mb-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                 class="border-2 rounded-xl p-3 text-center transition-all {{ old('audience') === 'specific_employees' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300' }}">
+                                <svg class="w-5 h-5 mx-auto mb-1 {{ old('audience') === 'specific_employees' ? 'text-emerald-600' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                 </svg>
-                                <p class="text-xs font-semibold text-gray-700">Specific Employees</p>
+                                <p class="text-xs font-semibold text-gray-700">Specific Staff</p>
                                 <p class="text-xs text-gray-400 mt-0.5">Choose one or more</p>
                             </div>
                         </label>
                     </div>
+                </div>
+
+                {{-- Department Picker --}}
+                <div id="department-picker" style="{{ old('audience') === 'by_department' ? '' : 'display:none;' }}" class="space-y-2">
+                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Select Department *</label>
+                    <select name="department" id="department-select"
+                            class="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white appearance-none" style="background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:2.5rem;">
+                        <option value="">-- Select a department --</option>
+                        @foreach($departments as $dept)
+                            <option value="{{ $dept }}" {{ old('department') === $dept ? 'selected' : '' }}>{{ $dept }}</option>
+                        @endforeach
+                    </select>
+                    @if(empty($departments))
+                        <p class="text-xs text-amber-600">No departments configured. Go to <a href="{{ route('tenant.settings.index') }}" class="underline">Settings &rarr; Departments</a> to add departments first.</p>
+                    @endif
                 </div>
 
                 {{-- Employee Picker --}}
@@ -146,31 +174,33 @@
 </div>
 
 <script>
-// Audience toggle
 function setAudience(value) {
     var isSpecific = value === 'specific_employees';
-    document.getElementById('employee-picker').style.display = isSpecific ? '' : 'none';
-    if (!isSpecific) deselectAllEmployees();
+    var isDept     = value === 'by_department';
 
-    document.getElementById('card-all').className = 'border-2 rounded-xl p-3 text-center transition-all ' +
-        (value === 'all_employees' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300');
-    document.getElementById('card-specific').className = 'border-2 rounded-xl p-3 text-center transition-all ' +
-        (isSpecific ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300');
+    document.getElementById('employee-picker').style.display   = isSpecific ? '' : 'none';
+    document.getElementById('department-picker').style.display = isDept ? '' : 'none';
+    if (!isSpecific) deselectAllEmployees();
+    if (!isDept) document.getElementById('department-select').value = '';
+
+    var active   = 'border-2 rounded-xl p-3 text-center transition-all border-emerald-500 bg-emerald-50';
+    var inactive = 'border-2 rounded-xl p-3 text-center transition-all border-gray-200 hover:border-gray-300';
+    document.getElementById('card-all').className      = (value === 'all_employees') ? active : inactive;
+    document.getElementById('card-dept').className     = isDept     ? active : inactive;
+    document.getElementById('card-specific').className = isSpecific ? active : inactive;
 }
 
-document.getElementById('aud-all').addEventListener('change', function() { setAudience('all_employees'); });
+document.getElementById('aud-all').addEventListener('change',      function() { setAudience('all_employees'); });
+document.getElementById('aud-dept').addEventListener('change',     function() { setAudience('by_department'); });
 document.getElementById('aud-specific').addEventListener('change', function() { setAudience('specific_employees'); });
 
-document.querySelectorAll('label[for^="aud-"]').forEach(function(lbl) {
-    lbl.addEventListener('click', function() {
-        var input = document.querySelector(this.getAttribute('for') ? '#' + this.getAttribute('for') : null);
-    });
-});
-
-// Click on the card divs
 document.getElementById('card-all').parentElement.addEventListener('click', function() {
     document.getElementById('aud-all').checked = true;
     setAudience('all_employees');
+});
+document.getElementById('card-dept').parentElement.addEventListener('click', function() {
+    document.getElementById('aud-dept').checked = true;
+    setAudience('by_department');
 });
 document.getElementById('card-specific').parentElement.addEventListener('click', function() {
     document.getElementById('aud-specific').checked = true;
