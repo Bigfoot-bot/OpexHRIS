@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Tenant\Training;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tenant\Employee;
+use App\Models\Tenant\Notification as TenantNotification;
 use App\Models\Tenant\TrainingProgram;
 use App\Models\Tenant\TrainingEnrollment;
 use App\Models\Tenant\User;
@@ -96,13 +97,22 @@ class TrainingController extends Controller
                 'status'              => 'enrolled',
             ]);
 
-            try {
-                $user = User::where('tenant_id', $tenantId)->where('employee_id', $employee->id)->first();
-                if ($user) {
-                    $link = 'https://' . request()->getHost() . '/training/' . $program->id;
+            $user = User::where('tenant_id', $tenantId)->where('employee_id', $employee->id)->first();
+            if ($user) {
+                TenantNotification::create([
+                    'tenant_id' => $tenantId,
+                    'user_id'   => $user->id,
+                    'title'     => 'Training Enrollment',
+                    'message'   => 'You have been enrolled in: ' . $program->title,
+                    'type'      => 'info',
+                    'link'      => route('tenant.employee.training'),
+                ]);
+
+                try {
+                    $link = 'https://' . request()->getHost() . '/my/training';
                     Mail::to($user->email)->send(new TrainingEnrolled($user, $program, $link));
-                }
-            } catch (\Exception $e) {}
+                } catch (\Exception $e) {}
+            }
         }
 
         $count = $employees->count();
@@ -149,17 +159,24 @@ class TrainingController extends Controller
             'status'    => 'enrolled',
         ]);
 
-        // Email employee about enrollment
-        try {
-            $user = User::where('tenant_id', tenant('id'))
-                        ->where('employee_id', $request->employee_id)
-                        ->first();
-            if ($user) {
-                $link = 'https://' . request()->getHost() . '/training/' . $training->id;
+        $user = User::where('tenant_id', tenant('id'))
+                    ->where('employee_id', $request->employee_id)
+                    ->first();
+
+        if ($user) {
+            TenantNotification::create([
+                'tenant_id' => tenant('id'),
+                'user_id'   => $user->id,
+                'title'     => 'Training Enrollment',
+                'message'   => 'You have been enrolled in: ' . $training->title,
+                'type'      => 'info',
+                'link'      => route('tenant.employee.training'),
+            ]);
+
+            try {
+                $link = 'https://' . request()->getHost() . '/my/training';
                 Mail::to($user->email)->send(new TrainingEnrolled($user, $training, $link));
-            }
-        } catch (\Exception $e) {
-            // Silently fail
+            } catch (\Exception $e) {}
         }
 
         return back()->with('success', 'Employee enrolled successfully!');
