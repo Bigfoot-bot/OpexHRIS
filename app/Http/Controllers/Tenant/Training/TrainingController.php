@@ -54,6 +54,7 @@ class TrainingController extends Controller
             'start_date'       => ['required', 'date'],
             'end_date'         => ['required', 'date', 'gte:start_date'],
             'location'         => ['nullable', 'string'],
+            'meeting_link'     => ['nullable', 'url'],
             'max_participants' => ['nullable', 'integer'],
             'audience'         => ['required', 'in:all_employees,by_department,specific_employees'],
             'department'       => ['required_if:audience,by_department', 'nullable', 'string'],
@@ -75,6 +76,7 @@ class TrainingController extends Controller
             'start_date'       => $request->start_date,
             'end_date'         => $request->end_date,
             'location'         => $request->location,
+            'meeting_link'     => $request->meeting_link,
             'max_participants' => $request->max_participants,
         ]);
 

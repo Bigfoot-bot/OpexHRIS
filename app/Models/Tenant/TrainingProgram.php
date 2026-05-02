@@ -21,6 +21,7 @@ class TrainingProgram extends Model
         'start_date',
         'end_date',
         'location',
+        'meeting_link',
         'max_participants',
         'status',
     ];
