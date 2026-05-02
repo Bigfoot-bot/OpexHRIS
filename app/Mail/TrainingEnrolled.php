@@ -16,7 +16,7 @@ class TrainingEnrolled extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: 'Training Enrollment — ' . $this->training->title);
+        return new Envelope(subject: 'Training Enrollment: ' . $this->training->title);
     }
 
     public function content(): Content
