@@ -59,6 +59,16 @@ class PayrollController extends Controller
         $month = $validated['month'];
         $year  = $validated['year'];
 
+        $exists = PayrollPeriod::where('tenant_id', tenant('id'))
+                               ->where('month', $month)
+                               ->where('year', $year)
+                               ->first();
+
+        if ($exists) {
+            return redirect()->route('tenant.payroll.show', $exists)
+                             ->with('error', "Payroll for " . Carbon::create($year, $month, 1)->format('F Y') . " has already been generated. You can view or edit it below.");
+        }
+
         $startDate = Carbon::create($year, $month, 1)->startOfMonth();
         $endDate   = Carbon::create($year, $month, 1)->endOfMonth();
 
