@@ -9,10 +9,6 @@ class PortalController extends Controller
         $user = auth()->user();
         $newPreference = $user->portal_preference === 'hr' ? 'employee' : 'hr';
 
-        if ($newPreference === 'employee' && !$user->employee_id) {
-            return back()->with('error', 'Your account is not linked to an employee profile. Please link your user account to an employee record before switching portals.');
-        }
-
         $user->update(['portal_preference' => $newPreference]);
 
         if ($newPreference === 'employee') {
