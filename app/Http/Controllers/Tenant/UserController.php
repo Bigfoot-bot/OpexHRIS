@@ -98,16 +98,25 @@ class UserController extends Controller
             'role'        => ['required', 'string'],
             'status'      => ['required', 'in:active,inactive'],
             'employee_id' => ['nullable', 'exists:employees,id'],
+            'is_admin'    => ['nullable', 'boolean'],
         ]);
 
         $oldRole = $user->roles->first()?->name;
 
-        $user->update([
+        $data = [
             'name'        => $validated['name'],
             'email'       => $validated['email'],
             'status'      => $validated['status'],
             'employee_id' => $validated['employee_id'] ?? null,
-        ]);
+        ];
+
+        // Only the current admin can promote/demote others — never themselves
+        if (auth()->user()->is_admin && auth()->id() !== $user->id) {
+            $data['is_admin'] = $request->boolean('is_admin');
+            $data['is_hr']    = $request->boolean('is_admin'); // admin implies HR access too
+        }
+
+        $user->update($data);
 
         $user->syncRoles([$validated['role']]);
 

@@ -83,6 +83,21 @@
                     </select>
                 </div>
 
+                @if(auth()->user()->is_admin && auth()->id() !== $user->id)
+                <div class="flex items-start justify-between rounded-lg border border-gray-200 px-4 py-3">
+                    <div>
+                        <p class="text-xs font-medium text-gray-700">Facility Admin</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Full access to all HR features, settings, and user management</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer ml-4 flex-shrink-0">
+                        <input type="hidden" name="is_admin" value="0"/>
+                        <input type="checkbox" name="is_admin" value="1" class="sr-only peer"
+                               {{ old('is_admin', $user->is_admin) ? 'checked' : '' }}/>
+                        <div class="w-10 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                    </label>
+                </div>
+                @endif
+
             </div>
         </div>
 
