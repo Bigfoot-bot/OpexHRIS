@@ -115,6 +115,23 @@ class BranchController extends Controller
     public function destroy(Branch $branch)
     {
         if ($branch->tenant_id !== tenant('id')) abort(403);
+
+        // Strip branch roles and branch_id from all users linked to this branch
+        $branchUsers = User::where('tenant_id', tenant('id'))
+                           ->where('branch_id', $branch->id)
+                           ->get();
+
+        foreach ($branchUsers as $user) {
+            $user->removeRole('Branch Manager');
+            $user->removeRole('Branch HR');
+            $user->update(['branch_id' => null]);
+        }
+
+        // Unlink employees from this branch
+        Employee::where('tenant_id', tenant('id'))
+                ->where('branch_id', $branch->id)
+                ->update(['branch_id' => null]);
+
         $branch->delete();
         return redirect()->route('tenant.branches.index')->with('success', 'Branch deleted successfully!');
     }
