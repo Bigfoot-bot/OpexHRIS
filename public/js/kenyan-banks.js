@@ -56,11 +56,12 @@ const bankCodes = {
     "Other": ""
 };
 
-function initBankFields(bankSelectId, branchSelectId, branchInputId, bankCodeId) {
-    const bankSelect   = document.getElementById(bankSelectId);
-    const branchSelect = document.getElementById(branchSelectId);
-    const branchInput  = document.getElementById(branchInputId);
-    const bankCodeInput = document.getElementById(bankCodeId);
+function initBankFields(bankSelectId, branchSelectId, branchInputId, bankCodeId, bankNameManualId) {
+    const bankSelect      = document.getElementById(bankSelectId);
+    const branchSelect    = document.getElementById(branchSelectId);
+    const branchInput     = document.getElementById(branchInputId);
+    const bankCodeInput   = document.getElementById(bankCodeId);
+    const bankNameManual  = bankNameManualId ? document.getElementById(bankNameManualId) : null;
 
     if (!bankSelect) return;
 
@@ -74,14 +75,28 @@ function initBankFields(bankSelectId, branchSelectId, branchInputId, bankCodeId)
         bankSelect.appendChild(option);
     });
 
+    function updateBankNameManual() {
+        if (!bankNameManual) return;
+        if (bankSelect.value === 'Other') {
+            bankNameManual.style.display = 'block';
+            bankNameManual.required = true;
+        } else {
+            bankNameManual.style.display = 'none';
+            bankNameManual.required = false;
+            bankNameManual.value = '';
+        }
+    }
+
     function updateBranches() {
         const selectedBank = bankSelect.value;
         const branches = kenyanBanks[selectedBank] || [];
         const currentBranch = branchSelect.dataset.current || '';
 
+        updateBankNameManual();
+
         // Auto-fill bank code
-        if (bankCodeInput && bankCodes[selectedBank]) {
-            bankCodeInput.value = bankCodes[selectedBank];
+        if (bankCodeInput) {
+            bankCodeInput.value = bankCodes[selectedBank] || '';
         }
 
         // Clear and repopulate branch dropdown
@@ -97,10 +112,12 @@ function initBankFields(bankSelectId, branchSelectId, branchInputId, bankCodeId)
         // Add "Other (type manually)" option
         const otherOption = document.createElement('option');
         otherOption.value = '__other__';
-        otherOption.textContent = 'Other (type manually)';
+        otherOption.textContent = 'Other — type manually';
+        if (currentBranch && !branches.includes(currentBranch)) {
+            otherOption.selected = true;
+        }
         branchSelect.appendChild(otherOption);
 
-        // Show/hide manual input
         updateBranchInput();
     }
 
@@ -119,5 +136,9 @@ function initBankFields(bankSelectId, branchSelectId, branchInputId, bankCodeId)
     branchSelect.addEventListener('change', updateBranchInput);
 
     // Initialize on page load
-    if (currentBank) updateBranches();
+    if (currentBank) {
+        updateBranches();
+    } else {
+        updateBankNameManual();
+    }
 }

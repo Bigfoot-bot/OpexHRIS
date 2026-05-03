@@ -133,6 +133,10 @@
                                 class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
                             <option value="">Select Bank</option>
                         </select>
+                        <input type="text" id="bank_name_manual" name="bank_name_manual"
+                               value="{{ old('bank_name_manual') }}"
+                               class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 mt-2"
+                               placeholder="Enter bank name manually" style="display:none;"/>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1.5">Account Name</label>
@@ -173,12 +177,18 @@
             <script src="{{ asset('js/kenyan-banks.js') }}"></script>
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
-                    initBankFields('bank_name_select', 'bank_branch_select', 'bank_branch_manual', 'bank_code');
+                    initBankFields('bank_name_select', 'bank_branch_select', 'bank_branch_manual', 'bank_code', 'bank_name_manual');
 
                     document.querySelector('form').addEventListener('submit', function() {
+                        const bankSelect  = document.getElementById('bank_name_select');
+                        const bankManual  = document.getElementById('bank_name_manual');
+                        if (bankSelect.value === 'Other' && bankManual.value.trim()) {
+                            bankSelect.name = '';
+                            bankManual.name = 'bank_name';
+                        }
                         const branchSelect = document.getElementById('bank_branch_select');
                         const branchManual = document.getElementById('bank_branch_manual');
-                        if (branchSelect.value === '__other__' && branchManual.value) {
+                        if (branchSelect.value === '__other__' && branchManual.value.trim()) {
                             branchSelect.name = '';
                             branchManual.name = 'bank_branch';
                         }
