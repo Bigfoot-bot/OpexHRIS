@@ -231,6 +231,8 @@ Route::middleware(['web'])
                     Route::get('branches', [App\Http\Controllers\Tenant\BranchController::class, 'index'])->name('tenant.branches.index');
                     Route::get('branches/create', [App\Http\Controllers\Tenant\BranchController::class, 'create'])->name('tenant.branches.create');
                     Route::post('branches', [App\Http\Controllers\Tenant\BranchController::class, 'store'])->name('tenant.branches.store');
+                    Route::get('branches/{branch}', [App\Http\Controllers\Tenant\BranchController::class, 'show'])->name('tenant.branches.show');
+                    Route::get('branches/{branch}/edit', [App\Http\Controllers\Tenant\BranchController::class, 'edit'])->name('tenant.branches.edit');
                     Route::put('branches/{branch}', [App\Http\Controllers\Tenant\BranchController::class, 'update'])->name('tenant.branches.update');
                     Route::delete('branches/{branch}', [App\Http\Controllers\Tenant\BranchController::class, 'destroy'])->name('tenant.branches.destroy');
                     Route::get('branches/{branch}/portal', [App\Http\Controllers\Tenant\BranchController::class, 'portal'])->name('tenant.branches.portal');
