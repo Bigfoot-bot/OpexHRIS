@@ -167,15 +167,30 @@ class OnboardingWizardController extends Controller
             'domain' => $slug . '.' . $baseHost,
         ]);
 
-        // Create HR Admin user
+        // Create admin employee record so the admin can access the employee portal
+        $nameParts = explode(' ', trim($step4['admin_name']), 2);
+        $employee  = \App\Models\Tenant\Employee::create([
+            'tenant_id'          => $tenant->id,
+            'employee_number'    => 'EMP0001',
+            'first_name'         => $nameParts[0],
+            'last_name'          => $nameParts[1] ?? $nameParts[0],
+            'email'              => $step4['admin_email'],
+            'employment_type'    => 'permanent',
+            'employment_status'  => 'active',
+            'hire_date'          => now()->toDateString(),
+            'nationality'        => 'Kenyan',
+        ]);
+
+        // Create HR Admin user linked to the employee record
         $user = \App\Models\Tenant\User::create([
-            'tenant_id' => $tenant->id,
-            'name'      => $step4['admin_name'],
-            'email'     => $step4['admin_email'],
-            'password'  => bcrypt($step4['admin_password']),
-            'status'    => 'active',
-            'is_admin'  => true,
-            'is_hr'     => true,
+            'tenant_id'   => $tenant->id,
+            'name'        => $step4['admin_name'],
+            'email'       => $step4['admin_email'],
+            'password'    => bcrypt($step4['admin_password']),
+            'status'      => 'active',
+            'is_admin'    => true,
+            'is_hr'       => true,
+            'employee_id' => $employee->id,
         ]);
 
         // Assign HR Admin role
