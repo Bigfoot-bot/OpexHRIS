@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Mail\BranchManagerAppointed;
 use App\Models\Branch;
 use App\Models\BranchBudgetAllocation;
 use App\Models\Tenant\Employee;
 use App\Models\Tenant\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class BranchController extends Controller
@@ -59,6 +61,13 @@ class BranchController extends Controller
             'period'           => $request->period ?? date('Y'),
         ]);
 
+        if ($branch->manager_id) {
+            $manager = User::find($branch->manager_id);
+            if ($manager && $manager->email) {
+                Mail::to($manager->email)->send(new BranchManagerAppointed($manager, $branch, tenant('name')));
+            }
+        }
+
         return redirect()->route('tenant.branches.index')->with('success', 'Branch created successfully!');
     }
 
@@ -83,7 +92,15 @@ class BranchController extends Controller
         if ($branch->tenant_id !== tenant('id')) abort(403);
         $request->validate(['name' => ['required', 'string', 'max:255']]);
 
+        $previousManagerId = $branch->manager_id;
         $branch->update($request->only(['name', 'address', 'phone', 'email', 'manager_id', 'status', 'notes']));
+
+        if ($request->manager_id && $request->manager_id != $previousManagerId) {
+            $manager = User::find($request->manager_id);
+            if ($manager && $manager->email) {
+                Mail::to($manager->email)->send(new BranchManagerAppointed($manager, $branch, tenant('name')));
+            }
+        }
 
         if ($request->allocated_amount !== null) {
             BranchBudgetAllocation::updateOrCreate(
@@ -138,6 +155,9 @@ class BranchController extends Controller
         if ($request->role === 'branch_manager') {
             $user->syncRoles(['Branch Manager']);
             $branch->update(['manager_id' => $user->id]);
+            if ($user->email) {
+                Mail::to($user->email)->send(new BranchManagerAppointed($user, $branch, tenant('name')));
+            }
         } else {
             $user->assignRole('Branch HR');
         }
