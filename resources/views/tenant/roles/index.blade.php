@@ -33,15 +33,16 @@
         {{-- Assign --}}
         <div>
             <h3 class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Assign Admin to Employee</h3>
+            @php $assignedEmployeeIds = $admins->pluck('employee_id')->filter()->toArray(); @endphp
             <form method="POST" action="{{ route('tenant.roles.admin.assign') }}" class="flex gap-2">
                 @csrf
                 <select name="employee_id" required
                         class="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
                     <option value="">Select employee…</option>
                     @foreach($employees as $emp)
-                        @unless($admins->contains(fn($a) => $a->employee_id == $emp->id))
+                        @if(!in_array($emp->id, $assignedEmployeeIds))
                         <option value="{{ $emp->id }}">{{ $emp->full_name }} — {{ $emp->job_title }}</option>
-                        @endunless
+                        @endif
                     @endforeach
                 </select>
                 <button type="submit"
