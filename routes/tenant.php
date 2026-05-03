@@ -86,6 +86,8 @@ Route::middleware(['web'])
                     Route::get('roles/users', [App\Http\Controllers\Tenant\RoleController::class, 'users'])->name('tenant.roles.users');
                     Route::post('roles/assign', [App\Http\Controllers\Tenant\RoleController::class, 'assignRole'])->name('tenant.roles.assign');
                     Route::post('roles/revoke', [App\Http\Controllers\Tenant\RoleController::class, 'revokeRole'])->name('tenant.roles.revoke');
+                    Route::post('roles/admin/assign', [App\Http\Controllers\Tenant\RoleController::class, 'assignAdmin'])->name('tenant.roles.admin.assign');
+                    Route::post('roles/admin/revoke', [App\Http\Controllers\Tenant\RoleController::class, 'revokeAdmin'])->name('tenant.roles.admin.revoke');
                     Route::put('roles/{role}', [App\Http\Controllers\Tenant\RoleController::class, 'update'])->name('tenant.roles.update');
                     Route::delete('roles/{role}', [App\Http\Controllers\Tenant\RoleController::class, 'destroy'])->name('tenant.roles.destroy');
 

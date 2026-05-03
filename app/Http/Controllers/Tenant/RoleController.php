@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\TenantRole;
 use App\Models\TenantPermission;
 use App\Models\TenantUserRole;
+use App\Models\Tenant\Employee;
 use App\Models\Tenant\User;
 use Illuminate\Http\Request;
 
@@ -18,7 +19,12 @@ class RoleController extends Controller
                            ->with('permissions')
                            ->get();
         $allPermissions = TenantRole::allPermissions();
-        return view('tenant.roles.index', compact('roles', 'allPermissions'));
+        $employees      = Employee::orderBy('first_name')->get();
+        $admins         = User::where('tenant_id', tenant('id'))
+                              ->where('is_admin', true)
+                              ->with('employee')
+                              ->get();
+        return view('tenant.roles.index', compact('roles', 'allPermissions', 'employees', 'admins'));
     }
 
     public function store(Request $request)
@@ -110,6 +116,39 @@ class RoleController extends Controller
                       ->delete();
 
         return back()->with('success', 'Role revoked successfully!');
+    }
+
+    public function assignAdmin(Request $request)
+    {
+        $request->validate(['employee_id' => ['required', 'exists:employees,id']]);
+
+        $employee = Employee::findOrFail($request->employee_id);
+        $user = User::where('tenant_id', tenant('id'))
+                    ->where('employee_id', $employee->id)
+                    ->first();
+
+        if (!$user) {
+            return back()->with('error', "{$employee->full_name} does not have a user account yet. Create one first under Users.");
+        }
+
+        $user->update(['is_admin' => true, 'is_hr' => true]);
+
+        return back()->with('success', "{$user->name} has been granted Facility Admin access.");
+    }
+
+    public function revokeAdmin(Request $request)
+    {
+        $request->validate(['user_id' => ['required', 'exists:tenant_users,id']]);
+
+        $user = User::findOrFail($request->user_id);
+
+        if ($user->id === auth()->id()) {
+            return back()->with('error', 'You cannot remove your own admin access.');
+        }
+
+        $user->update(['is_admin' => false, 'is_hr' => false]);
+
+        return back()->with('success', "{$user->name}'s admin access has been revoked.");
     }
 
     public function users()
