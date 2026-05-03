@@ -28,9 +28,6 @@ class BrandingSettingsController extends Controller
             'bank_branch'         => ['nullable', 'string', 'max:200'],
             'paybill_number'      => ['nullable', 'string', 'max:20'],
             'mpesa_account'       => ['nullable', 'string', 'max:100'],
-            'director_name'       => ['nullable', 'string', 'max:150'],
-            'director_title'      => ['nullable', 'string', 'max:150'],
-            'director_signature'  => ['nullable', 'file', 'mimes:png,jpg,jpeg', 'max:1024'],
         ]);
 
         $settings = BrandingSetting::getSettings();
@@ -45,8 +42,6 @@ class BrandingSettingsController extends Controller
             'bank_branch'         => $request->bank_branch,
             'paybill_number'      => $request->paybill_number,
             'mpesa_account'       => $request->mpesa_account,
-            'director_name'       => $request->director_name,
-            'director_title'      => $request->director_title,
         ];
 
         $brandingPath = public_path('branding');
@@ -54,7 +49,7 @@ class BrandingSettingsController extends Controller
             mkdir($brandingPath, 0777, true);
         }
 
-        foreach (['logo', 'favicon', 'director_signature'] as $field) {
+        foreach (['logo', 'favicon'] as $field) {
             if ($request->hasFile($field) && $request->file($field)->isValid()) {
                 if ($settings->$field && file_exists(public_path('branding/' . $settings->$field))) {
                     unlink(public_path('branding/' . $settings->$field));

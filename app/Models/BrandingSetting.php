@@ -17,9 +17,6 @@ class BrandingSetting extends Model
         'bank_branch',
         'paybill_number',
         'mpesa_account',
-        'director_name',
-        'director_title',
-        'director_signature',
     ];
     public static function getSettings(): self
     {

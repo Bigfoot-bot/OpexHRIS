@@ -338,6 +338,7 @@ Route::middleware(['web'])
                     Route::post('settings/payroll', [SettingsController::class, 'updatePayrollSettings'])->name('tenant.settings.payroll');
                     Route::post('settings/holidays', [SettingsController::class, 'updatePublicHolidays'])->name('tenant.settings.holidays');
                     Route::post('settings/logo', [SettingsController::class, 'updateLogo'])->name('tenant.settings.logo');
+                    Route::post('settings/certificate', [SettingsController::class, 'updateCertificateSettings'])->name('tenant.settings.certificate');
 
                     // Users
                     Route::resource('users', UserController::class)->names([

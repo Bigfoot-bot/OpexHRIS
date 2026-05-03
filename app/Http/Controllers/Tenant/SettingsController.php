@@ -154,6 +154,30 @@ class SettingsController extends Controller
         return back()->with('success', 'Public holidays updated successfully!');
     }
 
+    public function updateCertificateSettings(Request $request)
+    {
+        $request->validate([
+            'director_name'      => ['nullable', 'string', 'max:150'],
+            'director_title'     => ['nullable', 'string', 'max:150'],
+            'director_signature' => ['nullable', 'file', 'mimes:png,jpg,jpeg', 'max:1024'],
+        ]);
+
+        TenantSetting::set('director_name', $request->director_name);
+        TenantSetting::set('director_title', $request->director_title);
+
+        if ($request->hasFile('director_signature') && $request->file('director_signature')->isValid()) {
+            $old = TenantSetting::get('director_signature');
+            if ($old && file_exists(public_path('logos/' . $old))) {
+                unlink(public_path('logos/' . $old));
+            }
+            $filename = tenant('id') . '_dirsig_' . time() . '.' . $request->file('director_signature')->extension();
+            $request->file('director_signature')->move(public_path('logos'), $filename);
+            TenantSetting::set('director_signature', $filename);
+        }
+
+        return back()->with('success', 'Certificate settings updated successfully!');
+    }
+
     public function updatePassword(Request $request)
     {
         $request->validate([

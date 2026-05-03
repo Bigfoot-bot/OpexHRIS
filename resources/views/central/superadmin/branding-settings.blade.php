@@ -131,43 +131,6 @@
             </div>
         </div>
 
-        {{-- Certificate / Director Signature --}}
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-            <h2 class="text-sm font-semibold text-gray-800 mb-1">Certificate Settings</h2>
-            <p class="text-xs text-gray-400 mb-4">The director's signature will appear on all training completion certificates.</p>
-            <div class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Director / Signatory Name</label>
-                        <input type="text" name="director_name" value="{{ $settings->director_name ?? '' }}"
-                               placeholder="e.g. Dr. Jane Mwangi"
-                               class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Title / Designation</label>
-                        <input type="text" name="director_title" value="{{ $settings->director_title ?? '' }}"
-                               placeholder="e.g. Executive Director"
-                               class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
-                    </div>
-                </div>
-                <div class="flex items-start gap-6">
-                    <div class="w-40 h-20 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-                        @if($settings->director_signature)
-                            <img src="{{ asset('branding/' . $settings->director_signature) }}" alt="Signature" class="max-w-full max-h-full object-contain p-2"/>
-                        @else
-                            <span class="text-xs text-gray-400">No signature</span>
-                        @endif
-                    </div>
-                    <div class="flex-1">
-                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Upload Signature Image</label>
-                        <input type="file" name="director_signature" accept="image/png,image/jpg,image/jpeg"
-                               class="w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"/>
-                        <p class="text-xs text-gray-400 mt-1">PNG or JPG with transparent background preferred. Max 1MB. Recommended: 400x150px.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <button type="submit"
                 class="w-full bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium py-3 rounded-xl transition-colors">
             Save Branding Settings

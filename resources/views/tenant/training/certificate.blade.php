@@ -191,11 +191,11 @@
                     @endif
                     <div class="sig-line"></div>
                     <div class="sig-label">Authorized Signature</div>
-                    @if(!empty($branding->director_name))
-                        <div class="sig-name">{{ $branding->director_name }}</div>
+                    @if($directorName)
+                        <div class="sig-name">{{ $directorName }}</div>
                     @endif
-                    @if(!empty($branding->director_title))
-                        <div class="sig-title">{{ $branding->director_title }}</div>
+                    @if($directorTitle)
+                        <div class="sig-title">{{ $directorTitle }}</div>
                     @endif
                 </td>
                 <td style="vertical-align: middle; padding-bottom: 2mm;">

@@ -25,12 +25,13 @@
     @php $tab = request('tab', 'profile'); @endphp
     <div class="flex items-center gap-1 mb-6 bg-white rounded-xl border border-green-100 p-1">
         @foreach([
-            'profile'  => 'Facility Profile',
-            'departments' => 'Departments',
-            'leave'    => 'Leave Policy',
-            'payroll'  => 'Payroll',
-            'holidays' => 'Public Holidays',
-            'password' => 'Password',
+            'profile'      => 'Facility Profile',
+            'departments'  => 'Departments',
+            'leave'        => 'Leave Policy',
+            'payroll'      => 'Payroll',
+            'holidays'     => 'Public Holidays',
+            'certificate'  => 'Certificates',
+            'password'     => 'Password',
         ] as $key => $label)
         <a href="{{ route('tenant.settings.index') }}?tab={{ $key }}"
            class="flex-1 text-center text-sm py-2 rounded-lg transition-colors
@@ -376,6 +377,54 @@
             holidayCount++;
         }
     </script>
+    @endif
+
+    {{-- Certificate Settings Tab --}}
+    @if($tab === 'certificate')
+    <div class="max-w-2xl">
+        <div class="bg-white rounded-xl border border-green-100 p-6">
+            <h2 class="text-sm font-medium text-emerald-900 mb-1">Certificate Settings</h2>
+            <p class="text-xs text-gray-400 mb-5">The director's signature will appear on all training completion certificates issued to employees.</p>
+            <form method="POST" action="{{ route('tenant.settings.certificate') }}" enctype="multipart/form-data">
+                @csrf
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Director / Signatory Name</label>
+                            <input type="text" name="director_name"
+                                   value="{{ old('director_name', \App\Models\TenantSetting::get('director_name', '')) }}"
+                                   placeholder="e.g. Dr. Jane Mwangi"
+                                   class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Title / Designation</label>
+                            <input type="text" name="director_title"
+                                   value="{{ old('director_title', \App\Models\TenantSetting::get('director_title', '')) }}"
+                                   placeholder="e.g. Medical Director"
+                                   class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Signature Image</label>
+                        @php $sigFile = \App\Models\TenantSetting::get('director_signature'); @endphp
+                        @if($sigFile && file_exists(public_path('logos/' . $sigFile)))
+                            <img src="{{ asset('logos/' . $sigFile) }}" alt="Current Signature"
+                                 class="h-16 object-contain mb-3 border border-gray-100 rounded-lg p-2 bg-gray-50"/>
+                        @endif
+                        <input type="file" name="director_signature" accept="image/png,image/jpg,image/jpeg"
+                               class="w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"/>
+                        <p class="text-xs text-gray-400 mt-1">PNG or JPG with transparent background preferred. Max 1MB. Recommended: 400×150px.</p>
+                    </div>
+                </div>
+                <div class="mt-5">
+                    <button type="submit"
+                            class="bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium px-6 py-2.5 rounded-lg">
+                        Save Certificate Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
     @endif
 
     {{-- Password Tab --}}

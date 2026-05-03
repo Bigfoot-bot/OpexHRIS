@@ -9,7 +9,7 @@ use App\Models\Tenant\TrainingProgram;
 use App\Models\Tenant\TrainingEnrollment;
 use App\Models\Tenant\User;
 use App\Mail\TrainingEnrolled;
-use App\Models\BrandingSetting;
+use App\Models\TenantSetting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -218,18 +218,17 @@ class TrainingController extends Controller
             abort(403);
         }
 
-        $branding = BrandingSetting::first();
-        $sigPath = ($branding && $branding->director_signature)
-            ? public_path('branding/' . $branding->director_signature)
-            : null;
+        $sigFile = TenantSetting::get('director_signature');
+        $sigPath = $sigFile ? public_path('logos/' . $sigFile) : null;
 
         $pdf = Pdf::loadView('tenant.training.certificate', [
-            'enrollment' => $enrollment,
-            'training'   => $enrollment->trainingProgram,
-            'employee'   => $enrollment->employee,
-            'org'        => $branding?->platform_name ?? tenant('name'),
-            'branding'   => $branding,
-            'sigPath'    => $sigPath,
+            'enrollment'    => $enrollment,
+            'training'      => $enrollment->trainingProgram,
+            'employee'      => $enrollment->employee,
+            'org'           => tenant('name'),
+            'directorName'  => TenantSetting::get('director_name'),
+            'directorTitle' => TenantSetting::get('director_title'),
+            'sigPath'       => $sigPath,
         ])->setPaper('a4', 'landscape');
 
         $filename = 'certificate-' . str_replace(' ', '-', strtolower($enrollment->employee->full_name)) . '.pdf';
