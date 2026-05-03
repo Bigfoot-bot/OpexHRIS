@@ -84,12 +84,12 @@
                         <div class="w-16 flex-shrink-0">
                             <span class="text-xs font-semibold text-gray-500">Relief</span>
                         </div>
-                        <div class="w-48 flex-shrink-0 relative">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none">KES</span>
+                        <div class="flex items-center rounded-lg border border-gray-200 overflow-hidden w-48 flex-shrink-0 focus-within:ring-2 focus-within:ring-emerald-500">
+                            <span class="px-3 py-2 bg-gray-50 border-r border-gray-200 text-xs text-gray-400 flex-shrink-0">KES</span>
                             <input type="number" name="paye_personal_relief"
                                    value="{{ old('paye_personal_relief', (float)$settings->paye_personal_relief) }}"
                                    step="1" min="0"
-                                   class="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
+                                   class="flex-1 px-3 py-2 text-sm focus:outline-none min-w-0"/>
                         </div>
                         <p class="text-xs text-gray-400 leading-snug">Monthly personal relief deducted from gross tax <span class="text-gray-500 font-medium">(KRA default: KES 2,400/mo)</span></p>
                     </div>
