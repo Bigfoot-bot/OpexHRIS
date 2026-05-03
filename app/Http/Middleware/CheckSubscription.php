@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use App\Models\FacilitySubscription;
+use App\Models\Central\Tenant;
 
 class CheckSubscription
 {
@@ -34,13 +35,11 @@ class CheckSubscription
         $tenantId = tenant('id');
         if (!$tenantId) return $next($request);
 
-        $subscription = FacilitySubscription::where('tenant_id', $tenantId)
-                            ->latest()->first();
-
         $routeName = $request->route()?->getName();
 
-        // — SUSPENDED: block everything except logout —
-        if ($subscription && $subscription->status === 'suspended') {
+        // — SUSPENDED via is_active flag (set from super admin tenants page) —
+        $tenant = Tenant::find($tenantId);
+        if ($tenant && !$tenant->is_active) {
             foreach ($this->suspendedAllowedRoutes as $allowed) {
                 if ($routeName === $allowed || str_starts_with($routeName ?? '', $allowed)) {
                     return $next($request);
@@ -54,6 +53,19 @@ class CheckSubscription
             if ($routeName === $allowed || str_starts_with($routeName ?? '', $allowed)) {
                 return $next($request);
             }
+        }
+
+        $subscription = FacilitySubscription::where('tenant_id', $tenantId)
+                            ->latest()->first();
+
+        // — SUSPENDED via subscription status —
+        if ($subscription && $subscription->status === 'suspended') {
+            foreach ($this->suspendedAllowedRoutes as $allowed) {
+                if ($routeName === $allowed || str_starts_with($routeName ?? '', $allowed)) {
+                    return $next($request);
+                }
+            }
+            return $this->showSuspended($request);
         }
 
         // No subscription at all
