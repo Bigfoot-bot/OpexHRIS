@@ -22,7 +22,7 @@
         ];
         $categoryLabels = [
             'clinical'       => 'Clinical',
-            'administrative' => 'Administrative',
+            'administrative' => 'Admin',
             'compliance'     => 'Compliance',
             'leadership'     => 'Leadership',
             'technical'      => 'Technical',
@@ -44,137 +44,107 @@
     </div>
 
     @if($enrollments->isEmpty())
-        <div class="bg-white rounded-xl border border-blue-100 text-center py-16">
+        <div class="bg-white rounded-xl border border-gray-100 text-center py-16">
             <p class="text-gray-400 text-sm">No training programs enrolled yet.</p>
         </div>
     @else
-        <div class="space-y-4">
-            @foreach($enrollments as $enrollment)
-            @php $prog = $enrollment->trainingProgram; @endphp
-            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-gray-50 border-b border-gray-100">
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Program</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Category</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Dates</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">CPD</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Score</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    @foreach($enrollments as $enrollment)
+                    @php $prog = $enrollment->trainingProgram; @endphp
+                    <tr class="hover:bg-gray-50 transition-colors">
 
-                {{-- Header row --}}
-                <div class="flex items-start justify-between gap-4 mb-4">
-                    <div class="flex-1 min-w-0">
-                        <h3 class="text-base font-semibold text-emerald-900 truncate">{{ $prog->title }}</h3>
-                        @if($prog->provider)
-                            <p class="text-xs text-gray-400 mt-0.5">{{ $prog->provider }}</p>
-                        @endif
-                    </div>
-                    <span class="text-xs px-2.5 py-1 rounded-full {{ $statusColors[$enrollment->status] ?? 'bg-gray-50 text-gray-500' }} capitalize flex-shrink-0">
-                        {{ $enrollment->status }}
-                    </span>
-                </div>
+                        {{-- Program --}}
+                        <td class="px-4 py-3.5">
+                            <p class="font-medium text-gray-800 leading-tight">{{ $prog->title }}</p>
+                            @if($prog->provider)
+                                <p class="text-xs text-gray-400 mt-0.5">{{ $prog->provider }}</p>
+                            @endif
+                            <span class="text-xs text-gray-400">{{ $typeLabels[$prog->type] ?? ucfirst($prog->type) }}</span>
+                        </td>
 
-                {{-- Info grid --}}
-                <div class="grid grid-cols-2 gap-x-8 gap-y-3 text-sm mb-4">
-                    <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                        <span class="text-gray-500">
-                            {{ $prog->start_date->format('M d, Y') }}
+                        {{-- Category --}}
+                        <td class="px-4 py-3.5">
+                            <span class="text-xs text-gray-500">{{ $categoryLabels[$prog->category] ?? ucfirst($prog->category) }}</span>
+                        </td>
+
+                        {{-- Dates --}}
+                        <td class="px-4 py-3.5 whitespace-nowrap">
+                            <p class="text-xs text-gray-600">{{ $prog->start_date->format('d M Y') }}</p>
                             @if($prog->start_date->ne($prog->end_date))
-                                &rarr; {{ $prog->end_date->format('M d, Y') }}
+                                <p class="text-xs text-gray-400">to {{ $prog->end_date->format('d M Y') }}</p>
                             @endif
-                        </span>
-                    </div>
+                        </td>
 
-                    <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
-                        <span class="text-gray-500">
-                            @if($prog->type === 'online')
-                                Online
+                        {{-- CPD Points --}}
+                        <td class="px-4 py-3.5 text-center">
+                            @if($enrollment->cpd_points_earned)
+                                <span class="font-semibold text-emerald-700">{{ $enrollment->cpd_points_earned }}</span>
+                                <span class="text-xs text-gray-400"> / {{ $prog->cpd_points }}</span>
                             @else
-                                {{ $prog->location ?: 'Location TBC' }}
+                                <span class="text-xs text-gray-400">{{ $prog->cpd_points }}</span>
                             @endif
-                        </span>
-                    </div>
+                        </td>
 
-                    <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                        </svg>
-                        <span class="text-gray-500">{{ $typeLabels[$prog->type] ?? ucfirst($prog->type) }}</span>
-                    </div>
+                        {{-- Score --}}
+                        <td class="px-4 py-3.5 text-center">
+                            @if($enrollment->score)
+                                <span class="text-sm font-medium text-gray-700">{{ $enrollment->score }}%</span>
+                            @else
+                                <span class="text-gray-300">—</span>
+                            @endif
+                        </td>
 
-                    <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                        </svg>
-                        <span class="text-gray-500">{{ $categoryLabels[$prog->category] ?? ucfirst($prog->category) }}</span>
-                    </div>
+                        {{-- Status --}}
+                        <td class="px-4 py-3.5 text-center">
+                            <span class="text-xs px-2.5 py-1 rounded-full {{ $statusColors[$enrollment->status] ?? 'bg-gray-50 text-gray-500' }} capitalize font-medium">
+                                {{ $enrollment->status }}
+                            </span>
+                        </td>
 
-                    <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
-                        </svg>
-                        <span class="text-gray-500">{{ $prog->cpd_points }} CPD pts</span>
-                    </div>
+                        {{-- Actions --}}
+                        <td class="px-4 py-3.5 text-center whitespace-nowrap">
+                            <div class="flex items-center justify-center gap-2">
+                                @if($prog->meeting_link)
+                                    <a href="{{ $prog->meeting_link }}" target="_blank"
+                                       class="inline-flex items-center gap-1 text-xs bg-blue-50 hover:bg-blue-100 text-blue-600 font-medium px-3 py-1.5 rounded-lg transition-colors">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                        </svg>
+                                        Join
+                                    </a>
+                                @endif
+                                @if($enrollment->certificate_issued && $prog->certificate_provided)
+                                    <a href="{{ route('tenant.training.certificate', $enrollment) }}"
+                                       class="inline-flex items-center gap-1 text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 font-medium px-3 py-1.5 rounded-lg transition-colors">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                        </svg>
+                                        Certificate
+                                    </a>
+                                @endif
+                                @if(!$prog->meeting_link && !($enrollment->certificate_issued && $prog->certificate_provided))
+                                    <span class="text-gray-300 text-xs">—</span>
+                                @endif
+                            </div>
+                        </td>
 
-                    @if($enrollment->cpd_points_earned)
-                    <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                        </svg>
-                        <span class="text-emerald-600 font-medium">{{ $enrollment->cpd_points_earned }} pts earned</span>
-                    </div>
-                    @endif
-
-                    @if($enrollment->score)
-                    <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/>
-                        </svg>
-                        <span class="text-gray-500">Score: {{ $enrollment->score }}%</span>
-                    </div>
-                    @endif
-
-                    @if($enrollment->certificate_issued)
-                    <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                        </svg>
-                        <span class="text-amber-600 font-medium">Certificate Issued</span>
-                    </div>
-                    @endif
-                </div>
-
-                {{-- Description --}}
-                @if($prog->description)
-                    <p class="text-xs text-gray-400 mb-4 leading-relaxed">{{ $prog->description }}</p>
-                @endif
-
-                {{-- Action buttons --}}
-                @if($prog->meeting_link || ($enrollment->certificate_issued && $prog->certificate_provided))
-                <div class="flex items-center gap-3">
-                    @if($prog->meeting_link)
-                        <a href="{{ $prog->meeting_link }}" target="_blank"
-                           class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 py-2 rounded-lg transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                            </svg>
-                            Join Meeting
-                        </a>
-                    @endif
-                    @if($enrollment->certificate_issued && $prog->certificate_provided)
-                        <a href="{{ route('tenant.training.certificate', $enrollment) }}"
-                           class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium px-4 py-2 rounded-lg transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                            Download Certificate
-                        </a>
-                    @endif
-                </div>
-                @endif
-
-            </div>
-            @endforeach
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
 
         @if($enrollments->hasPages())

@@ -9,6 +9,7 @@ use App\Models\Tenant\TrainingProgram;
 use App\Models\Tenant\TrainingEnrollment;
 use App\Models\Tenant\User;
 use App\Mail\TrainingEnrolled;
+use App\Models\BrandingSetting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -217,11 +218,18 @@ class TrainingController extends Controller
             abort(403);
         }
 
+        $branding = BrandingSetting::first();
+        $sigPath = ($branding && $branding->director_signature)
+            ? public_path('branding/' . $branding->director_signature)
+            : null;
+
         $pdf = Pdf::loadView('tenant.training.certificate', [
             'enrollment' => $enrollment,
             'training'   => $enrollment->trainingProgram,
             'employee'   => $enrollment->employee,
-            'org'        => tenant('name'),
+            'org'        => $branding?->platform_name ?? tenant('name'),
+            'branding'   => $branding,
+            'sigPath'    => $sigPath,
         ])->setPaper('a4', 'landscape');
 
         $filename = 'certificate-' . str_replace(' ', '-', strtolower($enrollment->employee->full_name)) . '.pdf';
