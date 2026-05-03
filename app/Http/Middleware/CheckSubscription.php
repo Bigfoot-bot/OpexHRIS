@@ -8,6 +8,7 @@ use App\Models\FacilitySubscription;
 
 class CheckSubscription
 {
+    // Routes allowed when subscription is expired/missing (but NOT suspended)
     protected array $allowedRoutes = [
         'tenant.subscription.index',
         'tenant.subscription.plans',
@@ -21,9 +22,11 @@ class CheckSubscription
         'tenant.logout',
         'tenant.portal.switch',
         'tenant.branch.switch',
-        'tenant.employee.dashboard',
-        'tenant.employee.profile',
-        'tenant.notifications.index',
+    ];
+
+    // Only logout is allowed when suspended — nothing else
+    protected array $suspendedAllowedRoutes = [
+        'tenant.logout',
     ];
 
     public function handle(Request $request, Closure $next)
@@ -36,7 +39,17 @@ class CheckSubscription
 
         $routeName = $request->route()?->getName();
 
-        // Allow whitelisted routes
+        // — SUSPENDED: block everything except logout —
+        if ($subscription && $subscription->status === 'suspended') {
+            foreach ($this->suspendedAllowedRoutes as $allowed) {
+                if ($routeName === $allowed || str_starts_with($routeName ?? '', $allowed)) {
+                    return $next($request);
+                }
+            }
+            return $this->showSuspended($request);
+        }
+
+        // Allow whitelisted routes for expired/no-subscription states
         foreach ($this->allowedRoutes as $allowed) {
             if ($routeName === $allowed || str_starts_with($routeName ?? '', $allowed)) {
                 return $next($request);
@@ -48,30 +61,35 @@ class CheckSubscription
             return $this->blockAccess($request, 'no_subscription');
         }
 
-        // Trial period - allow access
+        // Trial period — allow access
         if ($subscription->status === 'trial' && $subscription->end_date->isFuture()) {
             return $next($request);
         }
 
-        // Active subscription - allow access
+        // Active subscription — allow access
         if ($subscription->status === 'active' && $subscription->end_date->isFuture()) {
             return $next($request);
         }
 
-        // Expired or suspended
+        // Expired
         return $this->blockAccess($request, $subscription->status);
+    }
+
+    protected function showSuspended(Request $request)
+    {
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'This facility has been suspended. Please contact support.'], 403);
+        }
+
+        return response()->view('tenant.subscription.suspended', [], 403);
     }
 
     protected function blockAccess(Request $request, string $reason)
     {
-        $user = auth()->user();
-
-        // Employees see a simple message
-        if ($user && !$user->is_admin && $user->tenantRoles()->count() === 0) {
-            return response()->view('tenant.subscription.suspended-employee', compact('reason'), 402);
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $this->getMessage($reason)], 402);
         }
 
-        // Admins/HR see subscription page
         return redirect()->route('tenant.subscription.index')
                          ->with('subscription_error', $this->getMessage($reason));
     }
