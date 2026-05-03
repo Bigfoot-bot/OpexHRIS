@@ -34,10 +34,10 @@
         <div>
             <h3 class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Assign Admin to Employee</h3>
             @php $assignedEmployeeIds = $admins->pluck('employee_id')->filter()->toArray(); @endphp
-            <form method="POST" action="{{ route('tenant.roles.admin.assign') }}" class="flex gap-2">
+            <form method="POST" action="{{ route('tenant.roles.admin.assign') }}" class="space-y-3">
                 @csrf
                 <select name="employee_id" required
-                        class="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
                     <option value="">Select employee…</option>
                     @foreach($employees as $emp)
                         @if(!in_array($emp->id, $assignedEmployeeIds))
@@ -46,8 +46,8 @@
                     @endforeach
                 </select>
                 <button type="submit"
-                        class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium px-4 py-2 rounded-lg whitespace-nowrap">
-                    Assign
+                        class="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors">
+                    Grant Admin Access
                 </button>
             </form>
             <p class="text-xs text-gray-400 mt-2">Only employees with an existing user account can be made admin.</p>
