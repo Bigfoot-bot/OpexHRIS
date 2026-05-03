@@ -49,6 +49,13 @@
                     <a href="{{ route('tenant.branches.show', $branch) }}" class="flex-1 text-center text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-medium px-3 py-1.5 rounded-lg">Manage</a>
                     <a href="{{ route('tenant.branch.dashboard', $branch) }}" class="flex-1 text-center text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 font-medium px-3 py-1.5 rounded-lg">Portal</a>
                     <a href="{{ route('tenant.branches.edit', $branch) }}" class="text-xs bg-gray-100 text-gray-600 hover:bg-gray-200 font-medium px-3 py-1.5 rounded-lg">Edit</a>
+                    <form method="POST" action="{{ route('tenant.branches.destroy', $branch) }}">
+                        @csrf @method('DELETE')
+                        <button type="submit" onclick="return confirm('Delete {{ $branch->name }}? This cannot be undone.')"
+                                class="text-xs bg-red-50 text-red-600 hover:bg-red-100 font-medium px-3 py-1.5 rounded-lg">
+                            Delete
+                        </button>
+                    </form>
                 </div>
             </div>
             @endforeach
