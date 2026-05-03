@@ -46,6 +46,9 @@ class LoginController extends Controller
     protected function redirectBasedOnRole($user): \Illuminate\Http\RedirectResponse
     {
         if ($user->is_admin) {
+            if ($user->employee_id && $user->portal_preference === 'employee') {
+                return redirect()->route('tenant.employee.dashboard');
+            }
             $user->update(['portal_preference' => 'hr']);
             return redirect()->route('tenant.dashboard');
         }

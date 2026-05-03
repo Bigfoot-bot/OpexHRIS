@@ -68,7 +68,8 @@ class User extends Authenticatable
     }
     public function canSwitchPortal(): bool
     {
-        return ($this->is_admin || $this->is_hr || $this->tenantRoles()->count() > 0) && $this->employee_id !== null;
+        if ($this->is_admin) return true;
+        return ($this->is_hr || $this->tenantRoles()->count() > 0) && $this->employee_id !== null;
     }
     public function isInEmployeePortal(): bool
     {
