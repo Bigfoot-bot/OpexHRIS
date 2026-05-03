@@ -20,8 +20,10 @@ class RoleController extends Controller
                            ->get();
         $allPermissions = TenantRole::allPermissions();
         $employees      = Employee::orderBy('first_name')->get();
+        $ownerUserId    = User::where('tenant_id', tenant('id'))->min('id');
         $admins         = User::where('tenant_id', tenant('id'))
                               ->where('is_admin', true)
+                              ->where('id', '!=', $ownerUserId)
                               ->with('employee')
                               ->get();
         return view('tenant.roles.index', compact('roles', 'allPermissions', 'employees', 'admins'));
@@ -140,10 +142,16 @@ class RoleController extends Controller
     {
         $request->validate(['user_id' => ['required', 'exists:tenant_users,id']]);
 
-        $user = User::findOrFail($request->user_id);
+        /** @var User $user */
+        $user        = User::findOrFail($request->user_id);
+        $ownerUserId = User::where('tenant_id', tenant('id'))->min('id');
 
         if ($user->id === auth()->id()) {
             return back()->with('error', 'You cannot remove your own admin access.');
+        }
+
+        if ($user->id === $ownerUserId) {
+            return back()->with('error', 'The original facility admin cannot be modified here.');
         }
 
         $user->update(['is_admin' => false, 'is_hr' => false]);
