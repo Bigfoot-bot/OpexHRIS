@@ -62,10 +62,7 @@ class BranchController extends Controller
         ]);
 
         if ($branch->manager_id) {
-            $manager = User::find($branch->manager_id);
-            if ($manager && $manager->email) {
-                Mail::to($manager->email)->send(new BranchManagerAppointed($manager, $branch, tenant('name')));
-            }
+            $this->applyManagerRole(User::find($branch->manager_id), $branch);
         }
 
         return redirect()->route('tenant.branches.index')->with('success', 'Branch created successfully!');
@@ -95,10 +92,18 @@ class BranchController extends Controller
         $previousManagerId = $branch->manager_id;
         $branch->update($request->only(['name', 'address', 'phone', 'email', 'manager_id', 'status', 'notes']));
 
-        if ($request->manager_id && $request->manager_id != $previousManagerId) {
-            $manager = User::find($request->manager_id);
-            if ($manager && $manager->email) {
-                Mail::to($manager->email)->send(new BranchManagerAppointed($manager, $branch, tenant('name')));
+        if ($request->manager_id != $previousManagerId) {
+            // Strip the old manager's role/branch
+            if ($previousManagerId) {
+                $oldManager = User::find($previousManagerId);
+                if ($oldManager) {
+                    $oldManager->removeRole('Branch Manager');
+                    $oldManager->update(['branch_id' => null]);
+                }
+            }
+            // Assign the new manager
+            if ($request->manager_id) {
+                $this->applyManagerRole(User::find($request->manager_id), $branch);
             }
         }
 
@@ -110,6 +115,16 @@ class BranchController extends Controller
         }
 
         return redirect()->route('tenant.branches.show', $branch)->with('success', 'Branch updated successfully!');
+    }
+
+    protected function applyManagerRole(?User $manager, Branch $branch): void
+    {
+        if (!$manager) return;
+        $manager->syncRoles(['Branch Manager']);
+        $manager->update(['branch_id' => $branch->id]);
+        if ($manager->email) {
+            Mail::to($manager->email)->send(new BranchManagerAppointed($manager, $branch, tenant('name')));
+        }
     }
 
     public function destroy(Branch $branch)

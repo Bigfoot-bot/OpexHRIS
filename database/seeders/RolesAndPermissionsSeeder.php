@@ -123,6 +123,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'view training',
         ]);
 
+        // Branch roles
+        Role::firstOrCreate(['name' => 'Branch Manager', 'guard_name' => 'web']);
+        Role::firstOrCreate(['name' => 'Branch HR', 'guard_name' => 'web']);
+
         $this->command->info('Roles and permissions seeded successfully!');
     }
 }
