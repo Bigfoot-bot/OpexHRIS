@@ -47,10 +47,10 @@
                 $dotColors = ['bg-gray-400','bg-blue-400','bg-emerald-500','bg-purple-400','bg-amber-400','bg-rose-400','bg-cyan-400'];
             @endphp
             <div class="space-y-3">
-                @foreach($planDistribution as $i => $plan)
+                @foreach($planDistribution as $plan)
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full {{ $dotColors[$i % count($dotColors)] }}"></div>
+                        <div class="w-2 h-2 rounded-full {{ $dotColors[$loop->index % count($dotColors)] }}"></div>
                         <span class="text-xs text-gray-500 capitalize">{{ $plan['name'] }} ({{ $plan['count'] }})</span>
                     </div>
                     <span class="text-xs font-medium text-gray-700">KES {{ number_format($plan['revenue']) }}</span>
@@ -66,14 +66,14 @@
         <div class="bg-white rounded-xl border border-green-100 p-6">
             <h2 class="text-sm font-medium text-emerald-900 mb-4">Plan Distribution</h2>
             <div class="space-y-4">
-                @foreach($planDistribution as $i => $plan)
+                @foreach($planDistribution as $plan)
                 <div>
                     <div class="flex justify-between mb-1">
                         <span class="text-xs text-gray-500 capitalize">{{ $plan['name'] }}</span>
                         <span class="text-xs font-medium text-gray-700">{{ $plan['count'] }}</span>
                     </div>
                     <div class="w-full bg-gray-100 rounded-full h-2">
-                        <div class="{{ $barColors[$i % count($barColors)] }} h-2 rounded-full"
+                        <div class="{{ $barColors[$loop->index % count($barColors)] }} h-2 rounded-full"
                              style="width: {{ $plan['percentage'] }}%"></div>
                     </div>
                 </div>
