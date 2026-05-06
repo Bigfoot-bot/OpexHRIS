@@ -42,66 +42,42 @@
         {{-- Monthly Revenue --}}
         <div class="bg-white rounded-xl border border-green-100 p-6">
             <h2 class="text-sm font-medium text-emerald-900 mb-4">Monthly Revenue (Est.)</h2>
-            <p class="text-3xl font-medium text-emerald-900 mb-4">KES {{ number_format($planRevenue['total']) }}</p>
+            <p class="text-3xl font-medium text-emerald-900 mb-4">KES {{ number_format($totalRevenue) }}</p>
+            @php
+                $dotColors = ['bg-gray-400','bg-blue-400','bg-emerald-500','bg-purple-400','bg-amber-400','bg-rose-400','bg-cyan-400'];
+            @endphp
             <div class="space-y-3">
+                @foreach($planDistribution as $i => $plan)
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full bg-gray-400"></div>
-                        <span class="text-xs text-gray-500">Basic ({{ $stats['basic_plan'] }})</span>
+                        <div class="w-2 h-2 rounded-full {{ $dotColors[$i % count($dotColors)] }}"></div>
+                        <span class="text-xs text-gray-500 capitalize">{{ $plan['name'] }} ({{ $plan['count'] }})</span>
                     </div>
-                    <span class="text-xs font-medium text-gray-700">KES {{ number_format($planRevenue['basic']) }}</span>
+                    <span class="text-xs font-medium text-gray-700">KES {{ number_format($plan['revenue']) }}</span>
                 </div>
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full bg-blue-400"></div>
-                        <span class="text-xs text-gray-500">Professional ({{ $stats['professional_plan'] }})</span>
-                    </div>
-                    <span class="text-xs font-medium text-gray-700">KES {{ number_format($planRevenue['professional']) }}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
-                        <span class="text-xs text-gray-500">Enterprise ({{ $stats['enterprise_plan'] }})</span>
-                    </div>
-                    <span class="text-xs font-medium text-gray-700">KES {{ number_format($planRevenue['enterprise']) }}</span>
-                </div>
+                @endforeach
             </div>
         </div>
 
         {{-- Plan Distribution --}}
+        @php
+            $barColors = ['bg-gray-400','bg-blue-400','bg-emerald-500','bg-purple-400','bg-amber-400','bg-rose-400','bg-cyan-400'];
+        @endphp
         <div class="bg-white rounded-xl border border-green-100 p-6">
             <h2 class="text-sm font-medium text-emerald-900 mb-4">Plan Distribution</h2>
             <div class="space-y-4">
+                @foreach($planDistribution as $i => $plan)
                 <div>
                     <div class="flex justify-between mb-1">
-                        <span class="text-xs text-gray-500">Basic</span>
-                        <span class="text-xs font-medium text-gray-700">{{ $stats['basic_plan'] }}</span>
+                        <span class="text-xs text-gray-500 capitalize">{{ $plan['name'] }}</span>
+                        <span class="text-xs font-medium text-gray-700">{{ $plan['count'] }}</span>
                     </div>
                     <div class="w-full bg-gray-100 rounded-full h-2">
-                        <div class="bg-gray-400 h-2 rounded-full"
-                             style="width: {{ $stats['total_facilities'] > 0 ? ($stats['basic_plan'] / $stats['total_facilities']) * 100 : 0 }}%"></div>
+                        <div class="{{ $barColors[$i % count($barColors)] }} h-2 rounded-full"
+                             style="width: {{ $plan['percentage'] }}%"></div>
                     </div>
                 </div>
-                <div>
-                    <div class="flex justify-between mb-1">
-                        <span class="text-xs text-gray-500">Professional</span>
-                        <span class="text-xs font-medium text-gray-700">{{ $stats['professional_plan'] }}</span>
-                    </div>
-                    <div class="w-full bg-gray-100 rounded-full h-2">
-                        <div class="bg-blue-400 h-2 rounded-full"
-                             style="width: {{ $stats['total_facilities'] > 0 ? ($stats['professional_plan'] / $stats['total_facilities']) * 100 : 0 }}%"></div>
-                    </div>
-                </div>
-                <div>
-                    <div class="flex justify-between mb-1">
-                        <span class="text-xs text-gray-500">Enterprise</span>
-                        <span class="text-xs font-medium text-gray-700">{{ $stats['enterprise_plan'] }}</span>
-                    </div>
-                    <div class="w-full bg-gray-100 rounded-full h-2">
-                        <div class="bg-emerald-500 h-2 rounded-full"
-                             style="width: {{ $stats['total_facilities'] > 0 ? ($stats['enterprise_plan'] / $stats['total_facilities']) * 100 : 0 }}%"></div>
-                    </div>
-                </div>
+                @endforeach
             </div>
         </div>
 
