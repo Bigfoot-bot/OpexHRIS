@@ -63,7 +63,6 @@ Route::middleware(['web'])
                 Route::middleware(['auth', 'throttle:tenant'])->group(function () {
                     Route::post('/logout', [LoginController::class, 'logout'])->name('tenant.logout');
                     Route::post('portal/switch', [PortalController::class, 'switch'])->name('tenant.portal.switch');
-                    Route::post('portal/switch', [PortalController::class, 'switch'])->name('tenant.portal.switch');
                 });
 
 
@@ -90,6 +89,7 @@ Route::middleware(['web'])
                     Route::delete('roles/{role}', [App\Http\Controllers\Tenant\RoleController::class, 'destroy'])->name('tenant.roles.destroy');
 
                     // Branch Portal Routes
+                    Route::post('branch/switch', [App\Http\Controllers\Tenant\BranchPortalController::class, 'switch'])->name('tenant.branch.switch');
                     Route::prefix('branch/{branch}')->group(function () {
                         Route::get('dashboard', [App\Http\Controllers\Tenant\BranchPortalController::class, 'dashboard'])->name('tenant.branch.dashboard');
                         Route::get('employees', [App\Http\Controllers\Tenant\BranchPortalController::class, 'employees'])->name('tenant.branch.employees');
@@ -110,6 +110,37 @@ Route::middleware(['web'])
                         Route::post('employees', [App\Http\Controllers\Tenant\BranchPortalController::class, 'storeEmployee'])->name('tenant.branch.employees.store');
                         Route::get('employees/{employee}/edit', [App\Http\Controllers\Tenant\BranchPortalController::class, 'editEmployee'])->name('tenant.branch.employees.edit');
                         Route::put('employees/{employee}', [App\Http\Controllers\Tenant\BranchPortalController::class, 'updateEmployee'])->name('tenant.branch.employees.update');
+                        // Payroll management
+                        Route::get('payroll/create', [App\Http\Controllers\Tenant\BranchPortalController::class, 'payrollCreate'])->name('tenant.branch.payroll.create');
+                        Route::post('payroll', [App\Http\Controllers\Tenant\BranchPortalController::class, 'payrollStore'])->name('tenant.branch.payroll.store');
+                        Route::get('payroll/{period}', [App\Http\Controllers\Tenant\BranchPortalController::class, 'payrollShow'])->name('tenant.branch.payroll.show');
+                        Route::post('payroll/{period}/approve', [App\Http\Controllers\Tenant\BranchPortalController::class, 'payrollApprove'])->name('tenant.branch.payroll.approve');
+                        Route::put('payroll/record/{record}', [App\Http\Controllers\Tenant\BranchPortalController::class, 'payrollUpdateRecord'])->name('tenant.branch.payroll.record.update');
+                        // Document management
+                        Route::post('documents', [App\Http\Controllers\Tenant\BranchPortalController::class, 'documentsStore'])->name('tenant.branch.documents.store');
+                        Route::get('documents/{document}/download', [App\Http\Controllers\Tenant\BranchPortalController::class, 'documentsDownload'])->name('tenant.branch.documents.download');
+                        Route::delete('documents/{document}', [App\Http\Controllers\Tenant\BranchPortalController::class, 'documentsDestroy'])->name('tenant.branch.documents.destroy');
+                        // Asset management
+                        Route::get('assets/create', [App\Http\Controllers\Tenant\BranchPortalController::class, 'assetsCreate'])->name('tenant.branch.assets.create');
+                        Route::post('assets', [App\Http\Controllers\Tenant\BranchPortalController::class, 'assetsStore'])->name('tenant.branch.assets.store');
+                        Route::get('assets/{asset}', [App\Http\Controllers\Tenant\BranchPortalController::class, 'assetsShow'])->name('tenant.branch.assets.show');
+                        Route::post('assets/{asset}/assign', [App\Http\Controllers\Tenant\BranchPortalController::class, 'assetsAssign'])->name('tenant.branch.assets.assign');
+                        Route::post('assets/{asset}/return', [App\Http\Controllers\Tenant\BranchPortalController::class, 'assetsReturn'])->name('tenant.branch.assets.return');
+                        // Contract management
+                        Route::get('contracts/create', [App\Http\Controllers\Tenant\BranchPortalController::class, 'contractsCreate'])->name('tenant.branch.contracts.create');
+                        Route::post('contracts', [App\Http\Controllers\Tenant\BranchPortalController::class, 'contractsStore'])->name('tenant.branch.contracts.store');
+                        Route::get('contracts/{contract}', [App\Http\Controllers\Tenant\BranchPortalController::class, 'contractsShow'])->name('tenant.branch.contracts.show');
+                        Route::get('contracts/{contract}/download', [App\Http\Controllers\Tenant\BranchPortalController::class, 'contractsDownload'])->name('tenant.branch.contracts.download');
+                        Route::delete('contracts/{contract}', [App\Http\Controllers\Tenant\BranchPortalController::class, 'contractsDestroy'])->name('tenant.branch.contracts.destroy');
+                        // Loan management
+                        Route::get('loans', [App\Http\Controllers\Tenant\BranchPortalController::class, 'loansIndex'])->name('tenant.branch.loans.index');
+                        Route::get('loans/create', [App\Http\Controllers\Tenant\BranchPortalController::class, 'loansCreate'])->name('tenant.branch.loans.create');
+                        Route::post('loans', [App\Http\Controllers\Tenant\BranchPortalController::class, 'loansStore'])->name('tenant.branch.loans.store');
+                        Route::get('loans/{loan}', [App\Http\Controllers\Tenant\BranchPortalController::class, 'loansShow'])->name('tenant.branch.loans.show');
+                        Route::post('loans/{loan}/approve', [App\Http\Controllers\Tenant\BranchPortalController::class, 'loansApprove'])->name('tenant.branch.loans.approve');
+                        Route::post('loans/{loan}/reject', [App\Http\Controllers\Tenant\BranchPortalController::class, 'loansReject'])->name('tenant.branch.loans.reject');
+                        Route::post('loans/{loan}/disburse', [App\Http\Controllers\Tenant\BranchPortalController::class, 'loansDisburse'])->name('tenant.branch.loans.disburse');
+                        Route::post('repayments/{repayment}/payment', [App\Http\Controllers\Tenant\BranchPortalController::class, 'loansRecordPayment'])->name('tenant.branch.loans.payment');
                     });
                     Route::post('employees/{employee}/transfer', [App\Http\Controllers\Tenant\HR\EmployeeController::class, 'transfer'])->name('tenant.employees.transfer');
                     // Separations

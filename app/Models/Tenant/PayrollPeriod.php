@@ -11,6 +11,7 @@ class PayrollPeriod extends Model
 
     protected $fillable = [
         'tenant_id',
+        'branch_id',
         'name',
         'month',
         'year',

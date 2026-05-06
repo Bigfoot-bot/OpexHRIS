@@ -1,5 +1,5 @@
 @extends('tenant.branch.layout')
-@section('page-title', 'Branch Announcements')
+@section('page-title', 'Announcements')
 @section('content')
 <div class="grid grid-cols-2 gap-6">
     {{-- Post Announcement Form --}}
@@ -30,28 +30,20 @@
             <div>
                 <label class="block text-xs font-medium text-gray-600 mb-2">Send To *</label>
                 <div class="space-y-2">
-                    <label class="flex items-center gap-3 cursor-pointer p-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors audience-option {{ old('audience', 'branch_only') === 'all_branches' ? 'border-emerald-400 bg-emerald-50' : '' }}" data-value="all_branches">
-                        <input type="radio" name="audience" value="all_branches" class="w-4 h-4 text-emerald-600 branch-audience-radio"
-                               {{ old('audience', 'branch_only') === 'all_branches' ? 'checked' : '' }}>
-                        <div>
-                            <p class="text-xs font-semibold text-gray-700">All Employees — All Branches</p>
-                            <p class="text-xs text-gray-400">Visible to everyone across the facility</p>
-                        </div>
-                    </label>
-                    <label class="flex items-center gap-3 cursor-pointer p-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors audience-option {{ old('audience', 'branch_only') === 'branch_only' ? 'border-emerald-400 bg-emerald-50' : '' }}" data-value="branch_only">
+                    <label class="flex items-center gap-3 cursor-pointer p-2.5 rounded-lg border {{ old('audience', 'branch_only') === 'branch_only' ? 'border-emerald-400 bg-emerald-50' : 'border-gray-200' }} hover:bg-gray-50 transition-colors audience-option" data-value="branch_only">
                         <input type="radio" name="audience" value="branch_only" class="w-4 h-4 text-emerald-600 branch-audience-radio"
                                {{ old('audience', 'branch_only') === 'branch_only' ? 'checked' : '' }}>
                         <div>
-                            <p class="text-xs font-semibold text-gray-700">This Branch Only</p>
-                            <p class="text-xs text-gray-400">Only visible to employees in {{ $branch->name }}</p>
+                            <p class="text-xs font-semibold text-gray-700">All Branch Employees</p>
+                            <p class="text-xs text-gray-400">Visible to all employees in {{ $branch->name }}</p>
                         </div>
                     </label>
-                    <label class="flex items-center gap-3 cursor-pointer p-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors audience-option {{ old('audience') === 'specific_employees' ? 'border-emerald-400 bg-emerald-50' : '' }}" data-value="specific_employees">
+                    <label class="flex items-center gap-3 cursor-pointer p-2.5 rounded-lg border {{ old('audience') === 'specific_employees' ? 'border-emerald-400 bg-emerald-50' : 'border-gray-200' }} hover:bg-gray-50 transition-colors audience-option" data-value="specific_employees">
                         <input type="radio" name="audience" value="specific_employees" class="w-4 h-4 text-emerald-600 branch-audience-radio"
                                {{ old('audience') === 'specific_employees' ? 'checked' : '' }}>
                         <div>
                             <p class="text-xs font-semibold text-gray-700">Specific Employees</p>
-                            <p class="text-xs text-gray-400">Choose individual employees (any branch)</p>
+                            <p class="text-xs text-gray-400">Choose individual employees in this branch</p>
                         </div>
                     </label>
                 </div>
@@ -66,8 +58,8 @@
                     <button type="button" onclick="branchClearAll()" class="text-xs text-gray-400 hover:text-gray-600">Clear</button>
                     <span id="branch-emp-count" class="text-xs text-gray-400 ml-auto">0 selected</span>
                 </div>
-                <div class="border border-gray-200 rounded-xl divide-y divide-gray-100 max-h-52 overflow-y-auto" id="branch-emp-list">
-                    @foreach($allEmployees as $emp)
+                <div class="border border-gray-200 rounded-xl divide-y divide-gray-100 max-h-52 overflow-y-auto">
+                    @forelse($branchEmployees as $emp)
                     <label class="branch-emp-item flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer"
                            data-name="{{ strtolower($emp->first_name . ' ' . $emp->last_name) }}">
                         <input type="checkbox" name="employee_ids[]" value="{{ $emp->id }}"
@@ -75,10 +67,12 @@
                                {{ in_array($emp->id, old('employee_ids', [])) ? 'checked' : '' }}>
                         <div class="flex-1 min-w-0">
                             <p class="text-xs font-medium text-gray-700 truncate">{{ $emp->first_name }} {{ $emp->last_name }}</p>
-                            <p class="text-xs text-gray-400 truncate">{{ $emp->branch?->name ?? 'No branch' }}</p>
+                            <p class="text-xs text-gray-400 truncate">{{ $emp->job_title ?? $emp->department ?? '' }}</p>
                         </div>
                     </label>
-                    @endforeach
+                    @empty
+                    <div class="px-3 py-4 text-center text-xs text-gray-400">No active employees in this branch.</div>
+                    @endforelse
                 </div>
             </div>
 
@@ -102,12 +96,10 @@
                 $empNames = null;
                 if ($ann->employee_id !== null) {
                     $siblings = \App\Models\Announcement::where('tenant_id', $ann->tenant_id)
-                        ->where('title', $ann->title)
-                        ->where('body', $ann->body)
+                        ->where('title', $ann->title)->where('body', $ann->body)
                         ->whereNotNull('employee_id')
                         ->whereRaw("DATE_FORMAT(created_at, '%Y-%m-%d %H:%i') = DATE_FORMAT(?, '%Y-%m-%d %H:%i')", [$ann->created_at])
-                        ->with('employee')
-                        ->get();
+                        ->with('employee')->get();
                     $empCount = $siblings->count();
                     $empNames = $siblings->pluck('employee')->filter()->map(fn($e) => $e->first_name . ' ' . $e->last_name);
                 }
@@ -117,13 +109,9 @@
                     <div class="flex-1">
                         <div class="flex items-center gap-2 mb-1 flex-wrap">
                             @if($ann->employee_id !== null)
-                                <span class="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full">
-                                    {{ $empCount }} {{ $empCount === 1 ? 'employee' : 'employees' }}
-                                </span>
-                            @elseif($ann->branch_id)
-                                <span class="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">This Branch</span>
+                                <span class="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full">{{ $empCount }} {{ $empCount === 1 ? 'employee' : 'employees' }}</span>
                             @else
-                                <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">All Branches</span>
+                                <span class="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">This Branch</span>
                             @endif
                             <span class="text-xs text-gray-400">{{ $ann->created_at->format('M d, Y H:i') }}</span>
                         </div>
@@ -140,7 +128,7 @@
                     @if($ann->branch_id === $branch->id && $ann->employee_id === null)
                     <form method="POST" action="{{ route('tenant.branch.announcements.destroy', [$branch, $ann]) }}">
                         @csrf @method('DELETE')
-                        <button type="submit" class="text-xs text-red-500 hover:text-red-700">Delete</button>
+                        <button type="submit" class="text-xs text-red-500 hover:text-red-700 ml-3">Delete</button>
                     </form>
                     @endif
                 </div>
@@ -152,7 +140,6 @@
 </div>
 
 <script>
-// Audience radio styling
 document.querySelectorAll('.branch-audience-radio').forEach(function(radio) {
     radio.addEventListener('change', function() {
         document.querySelectorAll('.audience-option').forEach(function(opt) {
@@ -166,15 +153,15 @@ document.querySelectorAll('.branch-audience-radio').forEach(function(radio) {
         if (this.value !== 'specific_employees') branchClearAll();
     });
 });
-
-// Employee search
-document.getElementById('branch-emp-search').addEventListener('input', function() {
-    var q = this.value.toLowerCase();
-    document.querySelectorAll('.branch-emp-item').forEach(function(item) {
-        item.style.display = item.dataset.name.includes(q) ? '' : 'none';
+var searchEl = document.getElementById('branch-emp-search');
+if (searchEl) {
+    searchEl.addEventListener('input', function() {
+        var q = this.value.toLowerCase();
+        document.querySelectorAll('.branch-emp-item').forEach(function(item) {
+            item.style.display = item.dataset.name.includes(q) ? '' : 'none';
+        });
     });
-});
-
+}
 function branchSelectAll() {
     document.querySelectorAll('.branch-emp-checkbox').forEach(function(cb) {
         if (cb.closest('.branch-emp-item').style.display !== 'none') cb.checked = true;
@@ -187,7 +174,8 @@ function branchClearAll() {
 }
 function updateBranchCount() {
     var n = document.querySelectorAll('.branch-emp-checkbox:checked').length;
-    document.getElementById('branch-emp-count').textContent = n + ' selected';
+    var el = document.getElementById('branch-emp-count');
+    if (el) el.textContent = n + ' selected';
 }
 document.querySelectorAll('.branch-emp-checkbox').forEach(function(cb) {
     cb.addEventListener('change', updateBranchCount);
