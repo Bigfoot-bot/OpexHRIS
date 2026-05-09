@@ -1,8 +1,8 @@
-@extends(auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0 ? 'tenant.layouts.app' : 'tenant.employee.layouts.app')
+@extends((auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0) && !auth()->user()->isInEmployeePortal() ? 'tenant.layouts.app' : 'tenant.employee.layouts.app')
 @section('page-title', $contract->title)
 @section('page-subtitle', 'Contract details')
 @section('page-actions')
-@if(auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0)
+@if((auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0) && !auth()->user()->isInEmployeePortal())
     <div class="flex gap-2">
         <a href="{{ route('tenant.contracts.edit', $contract) }}" class="bg-white border border-gray-200 text-gray-600 text-sm font-medium px-4 py-2 rounded-lg">Edit</a>
         @if($contract->file_path)

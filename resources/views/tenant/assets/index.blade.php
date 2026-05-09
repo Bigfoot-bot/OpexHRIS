@@ -1,8 +1,8 @@
-@extends(auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0 ? 'tenant.layouts.app' : 'tenant.employee.layouts.app')
+@extends((auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0) && !auth()->user()->isInEmployeePortal() ? 'tenant.layouts.app' : 'tenant.employee.layouts.app')
 @section('page-title', 'Asset Management')
 @section('page-subtitle', 'Track and manage company assets')
 @section('page-actions')
-@if(auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0)
+@if((auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0) && !auth()->user()->isInEmployeePortal())
     <div class="flex gap-2">
         <a href="{{ route('tenant.assets.categories') }}" class="bg-white border border-gray-200 text-gray-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50">Categories</a>
         <a href="{{ route('tenant.assets.create') }}" class="bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium px-4 py-2 rounded-lg">+ Add Asset</a>
@@ -16,7 +16,7 @@
         <div class="bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm rounded-lg px-4 py-3">{{ session('success') }}</div>
     @endif
 
-    @if(auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0)
+    @if((auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0) && !auth()->user()->isInEmployeePortal())
     <div class="grid grid-cols-4 gap-4">
         @foreach(['available' => 'Available', 'assigned' => 'Assigned', 'under_repair' => 'Under Repair', 'disposed' => 'Disposed'] as $status => $label)
         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
@@ -31,7 +31,7 @@
         <form method="GET" class="flex gap-3">
             <input type="text" name="search" value="{{ request('search') }}" placeholder="Search assets..."
                    class="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
-            @if(auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0)
+            @if((auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0) && !auth()->user()->isInEmployeePortal())
             <select name="status" class="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 <option value="">All Status</option>
                 <option value="available" {{ request('status') == 'available' ? 'selected' : '' }}>Available</option>
@@ -85,7 +85,7 @@
                         <td class="px-6 py-4">
                             <div class="flex gap-2">
                                 <a href="{{ route('tenant.assets.show', $asset) }}" class="text-xs text-emerald-600 hover:text-emerald-800 font-medium">View</a>
-                                @if(auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0)
+                                @if((auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0) && !auth()->user()->isInEmployeePortal())
                                 <a href="{{ route('tenant.assets.edit', $asset) }}" class="text-xs text-blue-600 hover:text-blue-800 font-medium">Edit</a>
                                 @endif
                             </div>

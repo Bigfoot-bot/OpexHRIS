@@ -1,8 +1,8 @@
-@extends(auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0 ? 'tenant.layouts.app' : 'tenant.employee.layouts.app')
+@extends((auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0) && !auth()->user()->isInEmployeePortal() ? 'tenant.layouts.app' : 'tenant.employee.layouts.app')
 @section('page-title', $asset->name)
 @section('page-subtitle', 'Asset details and assignment history')
 @section('page-actions')
-    @if(auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0)
+    @if((auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0) && !auth()->user()->isInEmployeePortal())
     <div class="flex gap-2">
         <a href="{{ route('tenant.assets.edit', $asset) }}" class="bg-white border border-gray-200 text-gray-600 text-sm font-medium px-4 py-2 rounded-lg">Edit</a>
         @if($asset->status === 'assigned')
@@ -37,7 +37,7 @@
         </div>
 
         {{-- Assign Asset --}}
-        @if($asset->status !== 'disposed' && auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0)
+        @if(($asset->status !== 'disposed' && (auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0)) && !auth()->user()->isInEmployeePortal())
         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <h2 class="text-sm font-semibold text-gray-800 mb-4">Assign Asset</h2>
             <form method="POST" action="{{ route('tenant.assets.assign', $asset) }}" class="grid grid-cols-2 gap-4">

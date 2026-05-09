@@ -1,4 +1,4 @@
-@extends(auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0 ? 'tenant.layouts.app' : 'tenant.employee.layouts.app')
+@extends((auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0) && !auth()->user()->isInEmployeePortal() ? 'tenant.layouts.app' : 'tenant.employee.layouts.app')
 @section('page-title', 'Contracts')
 @section('page-subtitle', 'Manage employee contracts')
 @section('page-actions')
@@ -22,8 +22,8 @@
         <div class="space-y-1">
             @foreach($expiring as $contract)
             <p class="text-xs text-amber-600">
-                {{ $contract->employee->first_name ?? 'N/A' }} {{ $contract->employee->last_name ?? '' }} —
-                {{ $contract->title }} — Expires {{ $contract->end_date->format('M d, Y') }}
+                {{ $contract->employee->first_name ?? 'N/A' }} {{ $contract->employee->last_name ?? '' }} ï¿½
+                {{ $contract->title }} ï¿½ Expires {{ $contract->end_date->format('M d, Y') }}
                 ({{ $contract->daysUntilExpiry() }} days)
             </p>
             @endforeach
