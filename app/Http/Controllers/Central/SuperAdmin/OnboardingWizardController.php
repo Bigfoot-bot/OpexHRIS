@@ -144,10 +144,15 @@ class OnboardingWizardController extends Controller
             $slug = $originalSlug . '-' . $count++;
         }
 
+        $baseId = Str::slug($step1['name']);
+        do {
+            $tenantId = $baseId . '-' . rand(1000, 9999);
+        } while (Tenant::where('id', $tenantId)->exists());
+
         $selectedPlan = SubscriptionPlan::find($step1['subscription_plan']);
 
         $tenant = Tenant::create([
-            'id'                => Str::uuid(),
+            'id'                => $tenantId,
             'name'              => $step1['name'],
             'slug'              => $slug,
             'email'             => $step1['email'],

@@ -46,8 +46,13 @@ class TenantController extends Controller
             $slug = $originalSlug . '-' . $count++;
         }
 
+        $baseId = Str::slug($validated['name']);
+        do {
+            $tenantId = $baseId . '-' . rand(1000, 9999);
+        } while (Tenant::where('id', $tenantId)->exists());
+
         $tenant = Tenant::create([
-            'id'                => Str::uuid(),
+            'id'                => $tenantId,
             'name'              => $validated['name'],
             'slug'              => $slug,
             'email'             => $validated['email'],
