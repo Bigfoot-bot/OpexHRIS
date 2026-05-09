@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Central\SuperAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\Central\Tenant;
 use App\Models\Central\SuperAdmin;
+use App\Models\SubscriptionPlan;
 use App\Mail\FacilityRegistered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -20,16 +21,19 @@ class TenantController extends Controller
 
     public function create()
     {
-        return view('central.tenants.create');
+        $plans = SubscriptionPlan::where('is_active', true)->orderBy('monthly_price')->get();
+        return view('central.tenants.create', compact('plans'));
     }
 
     public function store(Request $request)
     {
+        $planNames = SubscriptionPlan::where('is_active', true)->pluck('name')->toArray();
+
         $validated = $request->validate([
             'name'              => ['required', 'string', 'max:255'],
             'email'             => ['required', 'email', 'unique:tenants,email'],
             'phone'             => ['required', 'string', 'max:20'],
-            'subscription_plan' => ['required', 'in:basic,professional,enterprise'],
+            'subscription_plan' => ['required', 'in:' . implode(',', $planNames)],
             'admin_name'        => ['required', 'string', 'max:255'],
             'admin_email'       => ['required', 'email'],
             'admin_password'    => ['required', 'string', 'min:8'],
@@ -53,8 +57,9 @@ class TenantController extends Controller
             'trial_ends_at'     => now()->addDays(14),
         ]);
 
+        $baseHost = parse_url(config('app.url'), PHP_URL_HOST);
         $tenant->domains()->create([
-            'domain' => $slug . '.hris-platform.test',
+            'domain' => $slug . '.' . $baseHost,
         ]);
 
         \App\Models\Tenant\User::create([
@@ -62,17 +67,17 @@ class TenantController extends Controller
             'name'      => $validated['admin_name'],
             'email'     => $validated['admin_email'],
             'password'  => bcrypt($validated['admin_password']),
+            'is_admin'  => true,
             'status'    => 'active',
         ]);
 
-        // Send email notification to Super Admin
         try {
             $superAdmin = SuperAdmin::first();
             if ($superAdmin) {
                 Mail::to($superAdmin->email)->send(new FacilityRegistered($tenant));
             }
         } catch (\Exception $e) {
-            // Silently fail — don't block facility creation
+            // Silently fail â€” don't block facility creation
         }
 
         return redirect()->route('admin.tenants.index')
@@ -81,7 +86,29 @@ class TenantController extends Controller
 
     public function show(Tenant $tenant)
     {
-        return view('central.tenants.show', compact('tenant'));
+        $plans = SubscriptionPlan::where('is_active', true)->orderBy('monthly_price')->get();
+        return view('central.tenants.show', compact('tenant', 'plans'));
+    }
+
+    public function edit(Tenant $tenant)
+    {
+        $plans = SubscriptionPlan::where('is_active', true)->orderBy('monthly_price')->get();
+        return view('central.tenants.show', compact('tenant', 'plans'));
+    }
+
+    public function update(Request $request, Tenant $tenant)
+    {
+        $planNames = SubscriptionPlan::where('is_active', true)->pluck('name')->toArray();
+
+        $request->validate([
+            'name'  => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'unique:tenants,email,' . $tenant->id],
+            'phone' => ['required', 'string', 'max:20'],
+        ]);
+
+        $tenant->update($request->only(['name', 'email', 'phone']));
+
+        return back()->with('success', 'Facility details updated successfully.');
     }
 
     public function toggleStatus(Tenant $tenant)
@@ -93,8 +120,10 @@ class TenantController extends Controller
 
     public function updatePlan(Request $request, Tenant $tenant)
     {
+        $planNames = SubscriptionPlan::where('is_active', true)->pluck('name')->toArray();
+
         $request->validate([
-            'subscription_plan' => ['required', 'in:basic,professional,enterprise'],
+            'subscription_plan' => ['required', 'in:' . implode(',', $planNames)],
         ]);
 
         $tenant->update([

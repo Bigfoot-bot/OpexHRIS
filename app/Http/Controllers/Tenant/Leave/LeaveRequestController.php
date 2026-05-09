@@ -170,13 +170,15 @@ class LeaveRequestController extends Controller
             'rejection_reason' => ['required', 'string'],
         ]);
 
+        $wasApproved = $leaveRequest->status === 'approved';
+
         $leaveRequest->update([
             'status'           => 'rejected',
             'rejection_reason' => $request->rejection_reason,
         ]);
 
         // Restore leave balance if it was previously approved
-        if ($leaveRequest->status === 'approved') {
+        if ($wasApproved) {
             LeaveBalance::restore(
                 $leaveRequest->tenant_id,
                 $leaveRequest->employee_id,

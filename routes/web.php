@@ -31,7 +31,6 @@ Route::middleware(['guest:super_admin', 'throttle:login'])->group(function () {
 // Super Admin authenticated routes — general throttle
 Route::middleware(['auth:super_admin', 'throttle:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     // MFA Settings
     Route::get('mfa', [App\Http\Controllers\Central\MfaSettingsController::class, 'index'])->name('mfa.index');
     Route::post('mfa', [App\Http\Controllers\Central\MfaSettingsController::class, 'update'])->name('mfa.update');

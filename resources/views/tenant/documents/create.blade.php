@@ -1,4 +1,4 @@
-@extends(auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0 ? 'tenant.layouts.app' : 'tenant.employee.layouts.app')
+@extends((auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0) && !auth()->user()->isInEmployeePortal() ? 'tenant.layouts.app' : 'tenant.employee.layouts.app')
 @section('page-title', 'Upload Document')
 @section('page-subtitle', 'Upload a new document to the system')
 @section('content')

@@ -149,10 +149,6 @@
                 </form>
                 @endif
                 <div class="flex items-center gap-3">
-
-
-
-                <div class="flex items-center gap-3">
                     <div class="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs font-medium">
                         {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
                     </div>

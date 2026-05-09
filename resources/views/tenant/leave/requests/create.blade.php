@@ -1,8 +1,4 @@
-@if(auth()->user()->isInEmployeePortal())
-    @extends('tenant.employee.layouts.app')
-@else
-    @extends(auth()->check() && auth()->user()->portal_preference === 'employee' ? 'tenant.employee.layouts.app' : 'tenant.layouts.app')
-@endif
+@extends(auth()->user()->isInEmployeePortal() ? 'tenant.employee.layouts.app' : 'tenant.layouts.app')
 
 @section('page-title', 'Apply for Leave')
 @section('page-subtitle', 'Submit a new leave request')

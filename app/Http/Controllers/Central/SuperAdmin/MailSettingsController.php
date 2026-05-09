@@ -74,7 +74,7 @@ class MailSettingsController extends Controller
 
             Mail::raw('This is a test email from OpEx HRIS. Your mail settings are working correctly!', function ($message) use ($request, $settings) {
                 $message->to($request->test_email)
-                        ->subject('OpEx HRIS � Test Email');
+                        ->subject('OpEx HRIS - Test Email');
             });
 
             return back()->with('success', 'Test email sent successfully to ' . $request->test_email);

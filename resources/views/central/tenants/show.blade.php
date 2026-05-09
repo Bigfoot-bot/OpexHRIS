@@ -204,26 +204,17 @@
                         {{ $tenant->subscription_plan }}
                     </span>
                 </div>
+                @php $currentPlan = $plans->firstWhere('name', $tenant->subscription_plan); @endphp
                 <div class="flex items-center justify-between">
                     <span class="text-xs text-gray-400">Monthly Fee</span>
                     <span class="text-sm font-medium text-emerald-900">
-                        KES {{ number_format(match($tenant->subscription_plan) {
-                            'basic'        => 10000,
-                            'professional' => 25000,
-                            'enterprise'   => 90000,
-                            default        => 0
-                        }) }}
+                        KES {{ $currentPlan ? number_format($currentPlan->monthly_price) : '—' }}
                     </span>
                 </div>
                 <div class="flex items-center justify-between">
                     <span class="text-xs text-gray-400">Employee Limit</span>
                     <span class="text-sm text-gray-700">
-                        {{ match($tenant->subscription_plan) {
-                            'basic'        => '15',
-                            'professional' => '30',
-                            'enterprise'   => '100',
-                            default        => '—'
-                        } }}
+                        {{ $currentPlan?->max_employees ?? '—' }}
                     </span>
                 </div>
             </div>
@@ -235,9 +226,11 @@
                     <label class="block text-xs font-medium text-gray-600 mb-1.5">Change Plan</label>
                     <select name="subscription_plan"
                             class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-2">
-                        <option value="basic" {{ $tenant->subscription_plan === 'basic' ? 'selected' : '' }}>Basic — KES 10,000/mo</option>
-                        <option value="professional" {{ $tenant->subscription_plan === 'professional' ? 'selected' : '' }}>Professional — KES 25,000/mo</option>
-                        <option value="enterprise" {{ $tenant->subscription_plan === 'enterprise' ? 'selected' : '' }}>Enterprise — KES 90,000/mo</option>
+                        @foreach($plans as $plan)
+                        <option value="{{ $plan->name }}" {{ $tenant->subscription_plan === $plan->name ? 'selected' : '' }}>
+                            {{ ucfirst($plan->name) }} — KES {{ number_format($plan->monthly_price) }}/mo
+                        </option>
+                        @endforeach
                     </select>
                     <button type="submit"
                             class="w-full bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium py-2 rounded-lg transition-colors">

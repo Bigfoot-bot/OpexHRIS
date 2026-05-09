@@ -12,7 +12,8 @@ class ContractController extends Controller
 {
     public function index(Request $request)
     {
-        $isEmployee = !auth()->user()->is_admin && auth()->user()->tenantRoles()->count() === 0;
+        $isEmployee = auth()->user()->isInEmployeePortal()
+            || (!auth()->user()->is_admin && auth()->user()->tenantRoles()->count() === 0);
         $query = Contract::where('tenant_id', tenant('id'))->with('employee');
 
         if ($isEmployee) {

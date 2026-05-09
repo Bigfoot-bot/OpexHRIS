@@ -64,15 +64,12 @@
                             class="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-800
                                    focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
                         <option value="">Select a plan</option>
-                        <option value="basic" {{ old('subscription_plan') === 'basic' ? 'selected' : '' }}>
-                            Basic — Up to 15 employees (KES 10,000/mo)
+                        @foreach($plans as $plan)
+                        <option value="{{ $plan->name }}" {{ old('subscription_plan') === $plan->name ? 'selected' : '' }}>
+                            {{ ucfirst($plan->name) }} — KES {{ number_format($plan->monthly_price) }}/mo
+                            @if($plan->max_employees) (up to {{ $plan->max_employees }} employees)@endif
                         </option>
-                        <option value="professional" {{ old('subscription_plan') === 'professional' ? 'selected' : '' }}>
-                            Professional — Up to 30 employees (KES 25,000/mo)
-                        </option>
-                        <option value="enterprise" {{ old('subscription_plan') === 'enterprise' ? 'selected' : '' }}>
-                            Enterprise — Up to 100 employees (KES 90,000/mo)
-                        </option>
+                        @endforeach
                     </select>
                 </div>
 
