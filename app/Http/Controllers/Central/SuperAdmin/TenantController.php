@@ -97,8 +97,7 @@ class TenantController extends Controller
 
     public function edit(Tenant $tenant)
     {
-        $plans = SubscriptionPlan::where('is_active', true)->orderBy('monthly_price')->get();
-        return view('central.tenants.show', compact('tenant', 'plans'));
+        return redirect()->route('admin.tenants.show', $tenant);
     }
 
     public function update(Request $request, Tenant $tenant)

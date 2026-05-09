@@ -7,7 +7,6 @@ use App\Models\Tenant\Employee;
 use App\Models\Tenant\LeaveRequest;
 use App\Models\Tenant\PayrollRecord;
 use App\Models\Tenant\PayrollPeriod;
-use App\Models\Tenant\Attendance;
 use App\Models\Tenant\TrainingProgram;
 use Illuminate\Http\Request;
 
@@ -69,7 +68,7 @@ class ReportBuilderController extends Controller
                     'Job Title'      => $e->job_title,
                     'Employment Type'=> $e->employment_type,
                     'Status'         => $e->employment_status,
-                    'Date Joined'    => $e->date_of_joining,
+                    'Date Joined'    => $e->hire_date,
                     'Basic Salary'   => number_format($e->basic_salary, 2),
                     'Email'          => $e->email,
                     'Phone'          => $e->phone,
@@ -85,7 +84,7 @@ class ReportBuilderController extends Controller
                     'Leave Type'  => $l->leaveType->name ?? 'N/A',
                     'Start Date'  => $l->start_date,
                     'End Date'    => $l->end_date,
-                    'Days'        => $l->days,
+                    'Days'        => $l->days_requested,
                     'Status'      => $l->status,
                     'Reason'      => $l->reason,
                 ])->toArray();

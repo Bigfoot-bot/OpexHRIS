@@ -21,6 +21,7 @@ class PayrollPeriod extends Model
         'status',
         'approved_by',
         'approved_at',
+        'payment_mode',
     ];
 
     protected $casts = [

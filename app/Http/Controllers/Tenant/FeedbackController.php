@@ -84,7 +84,8 @@ class FeedbackController extends Controller
     {
         if ($response->tenant_id !== tenant('id')) abort(403);
         if ($response->reviewer_id !== auth()->id()) abort(403);
-        $feedback = $response->request()->with('employee')->first();
+        $response->load('request.employee');
+        $feedback = $response->request;
         return view('tenant.feedback.respond', compact('response', 'feedback'));
     }
 

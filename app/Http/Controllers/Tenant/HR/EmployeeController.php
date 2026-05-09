@@ -164,7 +164,6 @@ class EmployeeController extends Controller
                     [
                         'name'        => $employee->full_name,
                         'password'    => bcrypt($password),
-                        'role'        => 'employee',
                         'status'      => 'active',
                         'employee_id' => $employee->id,
                         'tenant_id'   => tenant('id'),

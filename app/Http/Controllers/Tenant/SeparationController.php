@@ -57,8 +57,8 @@ class SeparationController extends Controller
 
         // Calculate gratuity (basic salary * years of service / 12 * gratuity rate)
         $yearsOfService = 0;
-        if ($employee->date_of_joining) {
-            $yearsOfService = Carbon::parse($employee->date_of_joining)->diffInYears(now());
+        if ($employee->hire_date) {
+            $yearsOfService = Carbon::parse($employee->hire_date)->diffInYears(now());
         }
         $gratuity = ($employee->basic_salary ?? 0) * $yearsOfService * 0.15;
 
@@ -190,7 +190,7 @@ class SeparationController extends Controller
         $content .= "This is to certify that " . $employee->first_name . " " . $employee->last_name . "\n";
         $content .= "Employee Number: " . $employee->employee_number . "\n";
         $content .= "was employed by " . tenant('name') . "\n";
-        $content .= "from " . ($employee->date_of_joining ? Carbon::parse($employee->date_of_joining)->format('F d, Y') : 'N/A') . "\n";
+        $content .= "from " . ($employee->hire_date ? Carbon::parse($employee->hire_date)->format('F d, Y') : 'N/A') . "\n";
         $content .= "to " . $separation->last_working_date->format('F d, Y') . "\n\n";
         $content .= "Position held: " . ($employee->job_title ?? 'N/A') . "\n";
         $content .= "Department: " . ($employee->department ?? 'N/A') . "\n\n";
