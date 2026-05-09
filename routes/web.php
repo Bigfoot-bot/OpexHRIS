@@ -11,6 +11,9 @@ use App\Http\Controllers\Central\SuperAdmin\SupportTicketController;
 use App\Http\Controllers\Central\SuperAdmin\OnboardingWizardController;
 use App\Http\Controllers\Central\SuperAdmin\MailSettingsController;
 
+// Daraja M-Pesa callback — public, no auth (called by Safaricom servers)
+Route::post('/daraja/callback', [App\Http\Controllers\Central\DarajaCallbackController::class, 'handle'])->name('admin.daraja.callback');
+
 // Redirect root to login
 Route::get('/', fn() => redirect()->route('admin.login'));
 
