@@ -13,6 +13,8 @@ class CheckSubscription
     protected array $allowedRoutes = [
         'tenant.subscription.index',
         'tenant.subscription.plans',
+        'tenant.subscription.checkout',
+        'tenant.subscription.checkout.get',
         'tenant.subscription.pay',
         'tenant.wallet.index',
         'tenant.wallet.top-up',
