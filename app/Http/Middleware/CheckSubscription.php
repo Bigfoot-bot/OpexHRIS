@@ -16,6 +16,7 @@ class CheckSubscription
         'tenant.subscription.checkout',
         'tenant.subscription.checkout.get',
         'tenant.subscription.pay',
+        'tenant.subscription.stk-push',
         'tenant.wallet.index',
         'tenant.wallet.top-up',
         'tenant.wallet.submit-top-up',

@@ -83,8 +83,6 @@ class DarajaController extends Controller
                     'mpesa_phone'                => $phone,
                     'status'                     => 'pending',
                     'daraja_checkout_request_id' => $data['CheckoutRequestID'],
-                    'plan_id'                    => $request->plan_id ?: null,
-                    'cycle'                      => $request->cycle ?: null,
                 ]);
 
                 return back()->with('success', 'M-Pesa payment request sent! Please check your phone and enter your PIN.');

@@ -9,7 +9,11 @@ use App\Models\FacilitySubscription;
 use App\Models\SubscriptionPayment;
 use App\Models\SubscriptionInvoice;
 use App\Models\SystemSetting;
+use App\Models\Central\DarajaSetting;
+use App\Models\Central\WalletTopUpRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -268,5 +272,83 @@ class SubscriptionController extends Controller
         $settings = SystemSetting::getSettings();
         $plan     = $invoice->plan;
         return view('tenant.subscription.invoice', compact('invoice', 'settings', 'plan'));
+    }
+
+    public function stkPush(Request $request)
+    {
+        $request->validate([
+            'plan_id' => ['required', 'exists:subscription_plans,id'],
+            'cycle'   => ['required', 'in:monthly,quarterly,biannual,annual'],
+            'amount'  => ['required', 'numeric', 'min:1'],
+            'phone'   => ['required', 'string'],
+        ]);
+
+        $settings = DarajaSetting::getSettings();
+
+        if (!$settings->is_active) {
+            return back()->with('error', 'M-Pesa payments are not configured yet. Please use manual payment.');
+        }
+
+        $credentials = base64_encode($settings->consumer_key . ':' . $settings->consumer_secret);
+        try {
+            $tokenResponse = Http::withoutVerifying()->withHeaders([
+                'Authorization' => 'Basic ' . $credentials,
+            ])->get($settings->getBaseUrl() . '/oauth/v1/generate?grant_type=client_credentials');
+            $accessToken = $tokenResponse->json()['access_token'] ?? null;
+        } catch (\Exception $e) {
+            Log::error('Subscription STK token error: ' . $e->getMessage());
+            $accessToken = null;
+        }
+
+        if (!$accessToken) {
+            return back()->with('error', 'Failed to connect to M-Pesa. Please try again or use manual payment.');
+        }
+
+        $phone     = preg_replace('/^0/', '254', $request->phone);
+        $timestamp = now()->format('YmdHis');
+        $password  = base64_encode($settings->paybill_number . $settings->passkey . $timestamp);
+        $amount    = (int) $request->amount;
+        $plan      = SubscriptionPlan::findOrFail($request->plan_id);
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $accessToken,
+                'Content-Type'  => 'application/json',
+            ])->post($settings->getBaseUrl() . '/mpesa/stkpush/v1/processrequest', [
+                'BusinessShortCode' => $settings->paybill_number,
+                'Password'          => $password,
+                'Timestamp'         => $timestamp,
+                'TransactionType'   => 'CustomerPayBillOnline',
+                'Amount'            => $amount,
+                'PartyA'            => $phone,
+                'PartyB'            => $settings->paybill_number,
+                'PhoneNumber'       => $phone,
+                'CallBackURL'       => $settings->callback_url,
+                'AccountReference'  => tenant('id'),
+                'TransactionDesc'   => 'Subscription - ' . $plan->name . ' - ' . tenant('name'),
+            ]);
+
+            $data = $response->json();
+
+            if (isset($data['CheckoutRequestID'])) {
+                WalletTopUpRequest::create([
+                    'tenant_id'                  => tenant('id'),
+                    'payment_method'             => 'mpesa_daraja',
+                    'amount'                     => $amount,
+                    'mpesa_phone'                => $phone,
+                    'status'                     => 'pending',
+                    'daraja_checkout_request_id' => $data['CheckoutRequestID'],
+                    'plan_id'                    => $request->plan_id,
+                    'cycle'                      => $request->cycle,
+                ]);
+
+                return back()->with('success', 'M-Pesa prompt sent! Enter your PIN to activate your subscription.');
+            }
+
+            return back()->with('error', 'M-Pesa request failed: ' . ($data['errorMessage'] ?? 'Unknown error'));
+        } catch (\Exception $e) {
+            Log::error('Subscription STK push error: ' . $e->getMessage());
+            return back()->with('error', 'M-Pesa request failed. Please try again.');
+        }
     }
 }

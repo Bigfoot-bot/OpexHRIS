@@ -315,6 +315,7 @@ Route::middleware(['web'])
                     Route::get('subscription/checkout', [App\Http\Controllers\Tenant\SubscriptionController::class, 'checkoutGet'])->name('tenant.subscription.checkout.get');
                     Route::post('subscription/checkout', [App\Http\Controllers\Tenant\SubscriptionController::class, 'checkout'])->name('tenant.subscription.checkout');
                     Route::post('subscription/pay', [App\Http\Controllers\Tenant\SubscriptionController::class, 'submitPayment'])->name('tenant.subscription.pay');
+                    Route::post('subscription/stk-push', [App\Http\Controllers\Tenant\SubscriptionController::class, 'stkPush'])->name('tenant.subscription.stk-push');
                     Route::get('subscription/invoice/{invoice}', [App\Http\Controllers\Tenant\SubscriptionController::class, 'invoice'])->name('tenant.subscription.invoice');
 
                     // Wallet

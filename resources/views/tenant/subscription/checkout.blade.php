@@ -165,11 +165,10 @@
             </div>
             <span style="margin-left:auto; font-size:11px; background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0; padding:3px 10px; border-radius:20px;">Recommended</span>
         </div>
-        <form method="POST" action="{{ route('tenant.wallet.stk-push') }}" style="display:flex; gap:16px; align-items:flex-end;">
+        <form method="POST" action="{{ route('tenant.subscription.stk-push') }}" style="display:flex; gap:16px; align-items:flex-end;">
             @csrf
             <input type="hidden" name="plan_id" value="{{ $plan->id }}"/>
             <input type="hidden" name="cycle" value="{{ $cycle }}"/>
-            <input type="hidden" name="subscription" value="1"/>
             <div style="flex:1;">
                 <label style="display:block; font-size:11px; font-weight:500; color:#4b5563; margin-bottom:4px;">Phone Number *</label>
                 <input type="text" name="phone" required
