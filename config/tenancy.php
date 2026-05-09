@@ -9,7 +9,7 @@ return [
 
     'tenant_model' => Tenant::class,
 
-    'id_generator' => null,
+    'id_generator' => Stancl\Tenancy\UUIDGenerator::class,
 
     'central_domains' => array_filter([
         '127.0.0.1',
