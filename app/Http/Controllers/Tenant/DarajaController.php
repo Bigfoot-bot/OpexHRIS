@@ -6,6 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Central\DarajaSetting;
 use App\Models\Central\FacilityWallet;
 use App\Models\Central\WalletTopUpRequest;
+use App\Models\FacilitySubscription;
+use App\Models\SubscriptionPlan;
+use App\Models\SubscriptionDiscount;
+use App\Models\SystemSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -79,6 +83,8 @@ class DarajaController extends Controller
                     'mpesa_phone'                => $phone,
                     'status'                     => 'pending',
                     'daraja_checkout_request_id' => $data['CheckoutRequestID'],
+                    'plan_id'                    => $request->plan_id ?: null,
+                    'cycle'                      => $request->cycle ?: null,
                 ]);
 
                 return back()->with('success', 'M-Pesa payment request sent! Please check your phone and enter your PIN.');
@@ -110,7 +116,6 @@ class DarajaController extends Controller
             }
 
             if ($resultCode === 0) {
-                // Payment successful
                 $mpesaRef = collect($callbackMetadata)->firstWhere('Name', 'MpesaReceiptNumber')['Value'] ?? null;
                 $amount   = collect($callbackMetadata)->firstWhere('Name', 'Amount')['Value'] ?? $topUpRequest->amount;
 
@@ -121,21 +126,40 @@ class DarajaController extends Controller
                     'approved_by'           => 'Daraja Auto',
                 ]);
 
-                // Credit wallet automatically
-                $wallet = FacilityWallet::getOrCreate($topUpRequest->tenant_id);
-                $wallet->credit(
-                    $amount,
-                    'M-Pesa top-up via Daraja - ' . $mpesaRef,
-                    'mpesa_daraja',
-                    $mpesaRef,
-                    'daraja_auto'
-                );
+                if ($topUpRequest->plan_id && $topUpRequest->cycle) {
+                    // Subscription payment — activate it, do NOT credit wallet
+                    $plan        = SubscriptionPlan::find($topUpRequest->plan_id);
+                    $settings    = SystemSetting::getSettings();
+                    $discountPct = SubscriptionDiscount::getDiscount($topUpRequest->cycle);
+                    $months      = SubscriptionDiscount::getMonths($topUpRequest->cycle);
+                    $subtotal    = $plan->monthly_price * $months;
+                    $discountAmt = $subtotal * ($discountPct / 100);
+                    $afterDisc   = $subtotal - $discountAmt;
+                    $vatAmt      = $afterDisc * ($settings->vat_percentage / 100);
 
-                Log::info('Wallet credited automatically via Daraja', ['tenant' => $topUpRequest->tenant_id, 'amount' => $amount]);
+                    FacilitySubscription::create([
+                        'tenant_id'       => $topUpRequest->tenant_id,
+                        'plan_id'         => $plan->id,
+                        'cycle'           => $topUpRequest->cycle,
+                        'amount_paid'     => $amount,
+                        'vat_amount'      => $vatAmt,
+                        'discount_amount' => $discountAmt,
+                        'start_date'      => now()->toDateString(),
+                        'end_date'        => now()->addMonths($months)->toDateString(),
+                        'status'          => 'active',
+                        'auto_renew'      => false,
+                    ]);
+
+                    Log::info('Subscription activated via Daraja', ['tenant' => $topUpRequest->tenant_id, 'plan' => $plan->name, 'ref' => $mpesaRef]);
+                } else {
+                    // Wallet top-up
+                    $wallet = FacilityWallet::getOrCreate($topUpRequest->tenant_id);
+                    $wallet->credit($amount, 'M-Pesa top-up via Daraja - ' . $mpesaRef, 'mpesa_daraja', $mpesaRef, 'daraja_auto');
+                    Log::info('Wallet credited automatically via Daraja', ['tenant' => $topUpRequest->tenant_id, 'amount' => $amount]);
+                }
             } else {
-                // Payment failed
                 $topUpRequest->update(['status' => 'rejected', 'rejection_reason' => 'M-Pesa payment failed or cancelled']);
-                Log::info('Daraja payment failed', ['checkout_id' => $checkoutId, 'result_code' => $resultCode]);
+                Log::info('Daraja payment failed/cancelled', ['checkout_id' => $checkoutId, 'result_code' => $resultCode]);
             }
         } catch (\Exception $e) {
             Log::error('Daraja callback error: ' . $e->getMessage());

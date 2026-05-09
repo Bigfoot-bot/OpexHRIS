@@ -20,6 +20,8 @@ class WalletTopUpRequest extends Model
         'approved_by',
         'approved_at',
         'daraja_checkout_request_id',
+        'plan_id',
+        'cycle',
     ];
 
     protected $casts = [
