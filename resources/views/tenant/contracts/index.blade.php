@@ -2,7 +2,7 @@
 @section('page-title', 'Contracts')
 @section('page-subtitle', 'Manage employee contracts')
 @section('page-actions')
-    @if(auth()->user()->is_hr || auth()->user()->portal_preference !== 'employee')
+    @if(!auth()->user()->isInEmployeePortal() && (auth()->user()->is_admin || auth()->user()->tenantRoles()->count() > 0))
     <a href="{{ route('tenant.contracts.create') }}" class="bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium px-4 py-2 rounded-lg">
         + New Contract
     </a>
