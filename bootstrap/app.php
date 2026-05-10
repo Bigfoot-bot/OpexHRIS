@@ -16,6 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->validateCsrfTokens(except: [
+            'daraja/callback',
+        ]);
         $middleware->redirectGuestsTo(function ($request) {
             if ($request->getHost() !== 'hris-platform.test') {
                 return 'http://' . $request->getHost() . '/login';
