@@ -25,6 +25,9 @@ return Application::configure(basePath: dirname(__DIR__))
             }
             return 'http://hris-platform.test/login';
         });
+        $middleware->web(prepend: [
+            \App\Http\Middleware\CheckLicense::class,
+        ]);
         $middleware->web(append: [
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\LoadBrandingSettings::class,

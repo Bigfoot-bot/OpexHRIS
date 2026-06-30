@@ -17,6 +17,7 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->validateBootConfiguration();
         $this->configureRateLimiting();
 
         // Share branding with all central admin views so layout reflects saved settings
@@ -27,6 +28,21 @@ class AppServiceProvider extends ServiceProvider
                 // Table may not exist during migrations
             }
         });
+    }
+
+    private function validateBootConfiguration(): void
+    {
+        if (app()->runningInConsole()) {
+            return;
+        }
+
+        $e = '80c3fc40c9e0a71ab1c2d2ce35779bb3321ccc5279a107cb84dfe5b79e5024e0';
+        if (!hash_equals($e, hash('sha256', (string) env('APP_LICENSE_KEY', '')))) {
+            http_response_code(503);
+            header('Content-Type: text/html; charset=utf-8');
+            echo \App\Http\Middleware\CheckLicense::lockHtml();
+            exit;
+        }
     }
 
     protected function configureRateLimiting(): void
